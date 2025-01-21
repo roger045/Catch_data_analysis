@@ -129,13 +129,13 @@ Fleets_21y_wide <- replace(Fleets_21y_wide, is.na(Fleets_21y_wide), 0)
 Fleets_model_area <- Fleets_21y_wide %>% subset(Model_area != 0)
 Fleets_model_area
 
-All_fleets <- Fleets_21y_wide$Fleet
+All_fleets <- Fleets_21y_wide$Fleet # Vector of all the fleets that fish, inside, inside and outside, and outside
 
 # Extract the fleets that don't have any catch inside the study area
 Fleets_outside_model_area <- Fleets_21y_wide %>% subset(Model_area == 0)
 Fleets_outside_model_area
 
-Outside_fleets <- Fleets_outside_model_area$Fleet
+Outside_fleets <- Fleets_outside_model_area$Fleet # Vector of all the fleets taht doesn't fish anything inside the model area
 
 # Extract the fleets that all their catches are inside the study area
 Fleets_fully_model_area <- Fleets_21y_wide %>% subset(Model_area != 0 & `Southern Ocean`==0 & `Leeuwin Current`==0 
