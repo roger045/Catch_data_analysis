@@ -5,10 +5,12 @@
 ###### Adds the ecoregion information into the Rised catch dataset based on the latitude and longitude parameters  ######
 ###### Identifys points outside the ecoregions which where assinged NAs                                            ######
 ###### Finds the closest ecoregion for this points and assignes it instead of NAs                                  ######
+###### Author: Maria José Juan Jordá (IEO-CSIC) and Roger Amate (AZTI)                                             ######
+###### Year: 2023                                                                                                  ######
 #########################################################################################################################
 
 ################################################################################
-##### RESULT: Each register of a catch is assigned to an ecoregion based on the latitude and longitude #####
+##### FINAL PRODUCT OF THE SCRIPT: Each register of a catch is assigned to an ecoregion based on the latitude and longitude 
 ################################################################################
 
 ### Requiered packages
