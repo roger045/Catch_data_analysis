@@ -170,6 +170,109 @@ catch_perc_ecoregion <-colSums(Fleets_21y_perc[,-1])
 sum(catch_perc_ecoregion)
                                #####################################################
 
+                               ################ INDEX CALCULATIONS #################
+#--------------------------------Data preparation------------------------------#
+catch1 <- catch
+# Create a new column that is going to be filled with the general gear code of the gear ex. LL, PS, BB,...
+catch1$Gear_code <-NA
+
+# Check which Gear we have
+unique(catch1$Gear)
+
+# Longline (LL)
+catch1$Gear_code <- ifelse(catch1$Gear %in% c('ELL', 'FLL', 'LL', 'LLEX', 'LG', 'SLL'), 'LL', catch1$Gear_code)
+# Purse seine (PS)
+catch1$Gear_code <- ifelse(catch1$Gear %in% c('PS', 'PSS', 'RIN', 'RNOF'), 'PS', catch1$Gear_code)
+# Bait Boat (BB)
+catch1$Gear_code <- ifelse(catch1$Gear %in% c('BB', 'BBOF', 'BBM', 'BBN'), 'BB', catch1$Gear_code)
+# Gillnet (GN)
+catch1$Gear_code <- ifelse(catch1$Gear %in% c('GILL', 'GIOF', 'GL'), 'GN', catch1$Gear_code)
+# Line (L)
+catch1$Gear_code <- ifelse(catch1$Gear %in% c('HAND', 'TROL', 'LLCO', 'SPOR', 'HLOF', 'TROLM', 'TROLN'), 'LI', catch1$Gear_code)
+# Others (Others)
+catch1$Gear_code <- ifelse(catch1$Gear %in% c('DSEI', 'LIFT', 'BS', 'TRAW', 'TRAP', 'HARP', 'RR', 'FN', 'CN'), 'Others', catch1$Gear_code)
+
+# Check that the column Gear_code has been completely filled
+any(is.na(catch1$Gear_code)) # We should se FALSE here. If true it means that we missed a Gear on one of the lines
+
+# Aggregate the FS to the PS column when corresponding
+catch1$Gear_code <- ifelse(catch1$SchoolType==('FS') & catch1$Gear==('PS'), 'PSFS', catch1$Gear_code)
+
+# Aggregate the LS to the PS column when corresponding
+catch1$Gear_code <- ifelse(catch1$SchoolType==('LS') & catch1$Gear==('PS'), 'PSLS', catch1$Gear_code)
+
+# Delete the SchoolType columns as it is no longer needed
+catch1[10] <-NULL 
+# Unite the two columns of Gear_code and Fleet into one called 'Fleet'
+catch1$Fleet <- paste(catch1$Gear_code, catch1$Fleet, sep = '_')
+
+# Delete the Gear_code columns as it is no longer needed
+catch1[14] <-NULL 
+
+# Rename the datset so we don't mess it 
+dataset_all<-catch1
+dataset_all_20<- dataset_all %>% filter(Year >= '2000') # filter the yers of our interest
+
+
+######## Objective: calculate the SPECIFICITY ###### 
+# The specificicty represents the proportion of all the catches of that fleet that have been made inside the model area for all the years
+library(plyr)
+step1fl<-ddply(dataset_all_20, .(Fleet,Ecoregion_name), function(x) data.frame(sum_catch=sum(x$MT,na.rm=T)))
+
+# step 2: sum of the mean catches by fleet over all regions
+step2fl<-ddply(step1fl,.(Fleet),function(x) data.frame(Ecoregion_name=x$Ecoregion_name, sum_catch=x$sum_catch, 
+                                                       sum_all_catch=sum(x$sum_catch,na.rm=T)))  
+
+# Step 3: calculate the proportion of the catch in each ecoregion
+step2fl$Specificity<-step2fl$sum_catch/step2fl$sum_all_catch
+step2fl$fleet2<-as.factor(step2fl$Fleet)
+step2fl2 <- step2fl %>% filter (Ecoregion_name =="Model_area")
+
+# Delate line 84 as it contain an error, as the PS_EGY fleet has registers in the model area, with Num, but 0 in the MT column. 
+step2fl2 <- slice(step2fl2, -84)
+unique(step2fl2$Fleet)
+specificity_method='sum'
+###########################################################################################################################
+
+######## Objective: calculate the FIDELITY######
+# Which is for all the cells that the Model_Area ecoregion has, in how many of this cells each fleet has fished. 
+names(dataset_all_20)
+TcatchEcoLongLat<-ddply(dataset_all_20, .(Ecoregion_name,Latitude,Longitude), function(x) Tcatch = sum(x$MT,na.rm=T)) # Here we calculate how much of catches have been 
+summary(TcatchEcoLongLat)                                                                                             # made in each unique latitude and longitude combi
+
+Number_of_cells_Eco<-ddply(TcatchEcoLongLat, .(Ecoregion_name),summarize, count = length(Ecoregion_name)) # Here we calculate how many points (Lat,Long) fall in each Ecor
+head(Number_of_cells_Eco) # Shows how many cells each ecoregion has
+
+# Next, we calculate for each fleet, how many catch points fall in each ecoregion (for how many cells in each ecoregion there are registers of catch) 
+Number_of_cells_Eco_fleet<-ddply(dataset_all_20, .(Ecoregion_name,Fleet), function(x) count = dim(unique(x[,c('Latitude','Longitude')]))[1])
+head(Number_of_cells_Eco_fleet)
+
+# We then merge the two datasets so we know for each fleet, and ecoregion, how many points the ecoregion have, and on how many of it the fleet has catches.
+fidelity_prep<-merge(Number_of_cells_Eco,Number_of_cells_Eco_fleet,by.x="Ecoregion_name",by.y="Ecoregion_name")
+head(fidelity_prep)
+names(fidelity_prep)<-c("Ecoregion_name","Number_of_cells_Eco","Fleet","Number_of_cells_Eco_fleet")
+head(fidelity_prep)
+                                 
+# Here we divide the numer of cells that the fleet has catches by the number of cells that the ecoregion have.
+fidelity_prep$Fidelity<-fidelity_prep$Number_of_cells_Eco_fleet/fidelity_prep$Number_of_cells_Eco
+summary(fidelity_prep)
+levels(as.factor(fidelity_prep$Fleet))
+fidelity_prep$Fleet<-as.factor(fidelity_prep$Fleet)
+
+# Here we subset only the registers for the Model Area
+data_model_area_fidel <- fidelity_prep %>% filter(Ecoregion_name == "Model_area") 
+
+# Delate line 84 as it contain an error, as the PS_EGY fleet has registers in the model area, with Num, but 0 in the MT column. 
+data_model_area_fidel <- slice(data_model_area_fidel, -84)
+
+# The fidelity dataframe showing for each fleet (flag + gear) how many of the cells of the model area have catches in it. 
+view(data_model_area_fidel)
+                            
+
+
+
+
+
 
 
                                ################ EXPLORATORY TABLES #################
