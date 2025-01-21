@@ -24,19 +24,19 @@ setwd("~/...")
 
 
 #--------------------------------Data preparation------------------------------#
-
-# read the data
+# Read the data 
+# The data used is the file obtained as a result of the script  "1. Assignment to ecoregions of IOTC rised catch data"
 catch <- read.csv('Rised_catch_5sp_catches_ecoregion_with_model_reasinged.csv', sep=',')
 catch[1] <- NULL
 head(catch)
 str(catch)
 
-# check for NA values
+# Check for NA values
 any(is.na(catch)) # With this line we check if there are empty values (NA) in the database
 
 catch$Fleet <- trimws(catch$Fleet) # Dealte the white spaces that some fleets have at the end of their acronym.
 
-# Add a column classifying groups depending if the species is Tropical, temperate or subtropical billfishes
+# Add a column classifying groups depending if the species is tropical, temperate or subtropical billfishes
 # Create an empty column named: SPECIES_GROUP
 catch$SPECIES_GROUP <- NA
 
@@ -52,22 +52,21 @@ catch$SPECIES_GROUP <- ifelse(catch$Species=='SKJ', 'Tropical tunas', catch$SPEC
 # Yellowfin = Tropical
 catch$SPECIES_GROUP <- ifelse(catch$Species=='YFT', 'Tropical tunas', catch$SPECIES_GROUP)
 
-# Swordfish = Subtropical Billfishes
+# Swordfish = Subtropical billfishes
 catch$SPECIES_GROUP <- ifelse(catch$Species=='SWO', 'Subtropical billfishes', catch$SPECIES_GROUP)
 
+catch_21y <- catch%>%subset(Year >= '2000') # Subset the data for the years that we want (2000-2022)
+###################
 
-catch_21y <- catch%>%subset(Year >= '2000') # Subset the data for the years that we want
-
-Fleets <- aggregate(MT ~  Species +Ecoregion_name + Gear + SchoolType + Fleet + Year, data = catch_21y, sum) 
+# Aggregate, summing, the catch in tones (MT) data by multiple variables
+Fleets <- aggregate(MT ~  Species + Ecoregion_name + Gear + SchoolType + Fleet + Year, data = catch_21y, sum) 
 
 # Create a new column that is going to be filled with the general gear code of the gear ex. LL, PS, BB,...
 Fleets$Gear_code <-NA
-
 # Check which Gear we have
 unique(Fleets$Gear)
 
 ### Fill the column###
-
 # Longline (LL)
 Fleets$Gear_code <- ifelse(Fleets$Gear %in% c('ELL', 'FLL', 'LL', 'LLEX', 'LG', 'SLL'), 'LL', Fleets$Gear_code)
 
@@ -77,32 +76,28 @@ Fleets$Gear_code <- ifelse(Fleets$Gear %in% c('PS', 'PSS', 'RIN', 'RNOF'), 'PS',
 # Bait Boat (BB)
 Fleets$Gear_code <- ifelse(Fleets$Gear %in% c('BB', 'BBOF'), 'BB', Fleets$Gear_code)
 
-# Gill net (GN)
+# Gillnet (GN)
 Fleets$Gear_code <- ifelse(Fleets$Gear %in% c('GILL', 'GIOF', 'GL'), 'GN', Fleets$Gear_code)
 
-# Line (L)
+# Line (LI)
 Fleets$Gear_code <- ifelse(Fleets$Gear %in% c('HAND', 'TROL', 'LLCO', 'SPOR', 'HLOF', 'TROLM'), 'LI', Fleets$Gear_code)
 
 # Others (Others)
 Fleets$Gear_code <- ifelse(Fleets$Gear %in% c('DSEI', 'LIFT', 'BS', 'TRAW', 'TRAP', 'HARP', 'RR', 'FN', 'CN'), 'Others', Fleets$Gear_code)
 
 # Check that the column Gear_code has been completely filled
-any(is.na(Fleets$Gear_code)) # We should se FALSE here. If true it means that we missed a Gear on one of the lines
+any(is.na(Fleets$Gear_code)) # We should see FALSE here. If true it means that we missed a Gear on one of the lines.
+###################
 
-
-###### To identify which fleets fish inside the study area we want to create a new column with a % of how many registers 
-###### of each fleet are inside the study area.
+#### To identify which fleets (flag + gear) fish inside the study area we want to create a new column with a % of how many registers 
+#### of each fleet are inside the study area.
 ## If 100% - the fleets operates completely in the model area
 ## If >0% and <100% the fleet operates inside and outside our study area
 ## If 0% fleet operates entirely outside our study area
 
-
-# Agreegate the Gear, Fleet and SchoolType into one column so we can calculate
-
+# Aggregate the Gear, Fleet and SchoolType into one column 
 # Aggregate by Gear_code
 Fleets_21y <- aggregate(MT ~ Species + Ecoregion_name + Gear_code + SchoolType + Fleet, data = Fleets, sum) 
-
-#Fleets_21y <- Fleets %>% filter(Year >= '2000') %>% group_by(Ecoregion_name, Gear_code, SchoolType, Fleet) %>% summarise(sum_MT = sum(sum_MT)) %>% as.data.frame()
 
 # Aggregate the FS to the PS column when corresponding
 Fleets_21y$Gear_code <- ifelse((Fleets_21y$SchoolType==('FS') | Fleets_21y$SchoolType==('UNCL')) & Fleets_21y$Gear==('PS'), 'PSFS', Fleets_21y$Gear_code)
