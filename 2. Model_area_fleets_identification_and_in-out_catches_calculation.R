@@ -22,6 +22,7 @@ library(hrbrthemes)
 # Set the working directory where the dataset is saved
 setwd("~/...")
 
+                  ################ IN & OUT FLEETS IDENTIFICATION #################
 
 #--------------------------------Data preparation------------------------------#
 # Read the data 
@@ -95,9 +96,8 @@ any(is.na(Fleets$Gear_code)) # We should see FALSE here. If true it means that w
 ## If >0% and <100% the fleet operates inside and outside our study area
 ## If 0% fleet operates entirely outside our study area
 
-# Aggregate the Gear, Fleet and SchoolType into one column 
-# Aggregate by Gear_code
-Fleets_21y <- aggregate(MT ~ Species + Ecoregion_name + Gear_code + SchoolType + Fleet, data = Fleets, sum) 
+# Group by Gear, Ecoregion, Fleet and SchoolType 
+Fleets_21y <- Fleets %>% filter(Year >= '2000') %>% group_by(Ecoregion_name, Gear_code, SchoolType, Fleet) %>% summarise(MT = sum(MT)) %>% as.data.frame()
 
 # Aggregate the FS to the PS column when corresponding
 Fleets_21y$Gear_code <- ifelse((Fleets_21y$SchoolType==('FS') | Fleets_21y$SchoolType==('UNCL')) & Fleets_21y$Gear==('PS'), 'PSFS', Fleets_21y$Gear_code)
@@ -107,6 +107,9 @@ Fleets_21y$Gear_code <- ifelse(Fleets_21y$SchoolType==('LS') & Fleets_21y$Gear==
 
 # Delete the SchoolType columns as it is no longer needed
 Fleets_21y[3] <-NULL 
+
+# Aggregate the Gear, Fleet and SchoolType into one column 
+Fleets_21y <- Fleets_21y %>% group_by(Ecoregion_name, Gear_code, Fleet) %>% summarise(MT = sum(MT)) %>% as.data.frame()
 
 # Unite the two columns of Gear_code and Fleet into one called 'Fleet'
 Fleets_21y$Fleet <- paste(Fleets_21y$Gear_code, Fleets_21y$Fleet, sep = '_')
@@ -165,6 +168,12 @@ Fleets_21y_perc
 # Ecoregion % 
 catch_perc_ecoregion <-colSums(Fleets_21y_perc[,-1])
 sum(catch_perc_ecoregion)
+                               #####################################################
+
+
+
+                               ################ EXPLORATORY TABLES #################
+                               
 
 ################################  Extract the % of catches per SPECIES_GROUP ################################################
 Fleets <- aggregate(MT ~ Ecoregion_name + SPECIES_GROUP, data = catch_21y, sum) 
@@ -306,8 +315,8 @@ gear_sp
 # Species group % 
 gearsp <-colSums(gear_sp[,-1])
 sum(gearsp)
-
-
+###############################################################################################################################################
+                                              #####################################################
 
 
 
