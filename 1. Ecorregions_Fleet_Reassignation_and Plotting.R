@@ -1,14 +1,17 @@
-##################################################
-#This files, opens Rised catch, opens IOTC shapefile, add the ecoregion information into the Rised catch dataset,
-# then identify points outside the ecoregions which where assinged NAs, and find the closest ecoregion and assignes
-# the closest ecoregions to the NAs.
-#Use:
-#5sp_Rised_catch.csv
-#IOEcorregions.shp
-##################################################
 
+#########################################################################################################################
+###### This script opens the raw Rised catch database previously obtained from IOTC (.csv)                         ######
+###### Opens the shapefile created with the ecoregions of our interest (.shp)                                      ######
+###### Adds the ecoregion information into the Rised catch dataset based on the latitude and longitude parameters  ######
+###### Identifys points outside the ecoregions which where assinged NAs                                            ######
+###### Finds the closest ecoregion for this points and assignes it instead of NAs                                  ######
+#########################################################################################################################
 
+################################################################################
+##### RESULT: Each register of a catch is assigned to an ecoregion based on the latitude and longitude #####
+################################################################################
 
+### Requiered packages
 library("ggplot2")
 library('dplyr')
 library('tidyr')
@@ -21,31 +24,39 @@ library("rgeos")
 library("maps")
 library(rgdal)
 library(sf)
-
+###
 
 rm(list=ls())
-setwd("C:/Use/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/6.Ecor_fleet_reassing")
+
+# Set the working dierectory where the data of the rised catch is stored. The data must be in .csv format
+setwd("...")
 
 ##################################################
-#read catdis
+#read the dataset
 ##################################################
 
-datos<-read.csv("5sp_Rised_catch.csv",sep=";")
-head(datos)
+datos<-read.csv("5sp_Rised_catch.csv", sep=",")
+head(datos) # check the headers to know which variables there are
 names(datos)
-summary(datos)
+summary(datos) # get a summary of the data contained
 class(datos)# see how it is a data.frame
 
 ##################################################
 #read shapefile
 ##################################################
 
+# Set the working dierectory where the shapefile of the ecoregions is stored. It must be in .shp format.
+setwd("...")
+
 ecoregions<-readOGR("IOEcorregions.shp", layer="IOEcorregions")
 class(ecoregions) # see how it is a "SpatialPolygonsDataFrame"
 
-### plot ecoregions and points
+### create a basemap of the world for future maps
 world <- ne_countries(scale = "medium", returnclass = "sf")
 class(world)
+
+# Set the working dierectory where the data of the rised catch is stored or to a new one, where the newly generated datasets will be stored.
+setwd("...")
 
 ##################################################
 #Transform fishing ground code into latitude and longitude
