@@ -30,11 +30,29 @@ theme_set(theme_bw())
 
 rm(list=ls())
 
+#This opens the 5 species datsheets and merge them into one big dataset called "datos"
+# Set the working dierectory where the data of the rised catch of the 5 species separated is stored. The data must be in .csv format
+setwd("...")
+
+alb<-read.csv(file="ALB.csv",header=TRUE, sep=";")
+bet<-read.csv(file="BET.csv",header=TRUE, sep=";") 
+skj<-read.csv(file="SKJ.csv",header=TRUE, sep=";")
+swo<-read.csv(file="SWO.csv",header=TRUE, sep=";")
+yft<-read.csv(file="YFT.csv",header=TRUE, sep=";")
+
+# Combine files
+datos<-rbind(alb,bet,skj,swo,yft)
+summary(datos)
+
+# Save the file
+write.csv(datos, file="5sp.csv", row.names = FALSE)
+##################################################
+
 # Set the working dierectory where the data of the rised catch is stored. The data must be in .csv format
 setwd("...")
 
 # Read the dataset
-datos<-read.csv("5sp_Rised_catch.csv", sep=",")
+datos<-read.csv("5sp.csv", sep=",")
 head(datos) # check the headers to know which variables there are
 names(datos)
 summary(datos) # get a summary of the data contained
@@ -121,8 +139,34 @@ identical(proj4string(datos),proj4string(ecoregions)) # We want to see here TRUE
 ##################################################
 
 ### Find overlaping and adding extra column to Rised catch
-# W find the overlap between the points and poligons of the shapefiles so we can add the extra columns with
+# We find the overlap between the points and poligons of the shapefiles so we can add the extra columns with
 # ecoregion information (names) into the Rised catch database 
+
+# 1st We split the dataset of the points into 10 parts so the function over can be performed as if not it can't be performed
+# by some computers due to too much computational power needed.
+
+# Number of subsets
+num_subsets <- 10
+
+# Create a list to store the subsets
+datos_subsets <- split(datos, cut(1:length(datos), breaks = num_subsets))
+
+# Initialize an empty list to store the results
+results_list <- list()
+
+for (i in 1:num_subsets) {
+  # Perform the spatial join for the i-th subset
+  print(i) # with this line we see in which subset it is working
+  points_with_ecoregions1 <- over(datos_subsets[[i]], ecoregions)
+  
+  # Append the result to the list
+  results_list[[i]] <- points_with_ecoregions1
+}
+
+points_with_ecoregions <- do.call(rbind, results_list)
+write.csv(points_with_ecoregions,file="points_with_ecoregions.csv")
+
+
 
 # Here we do the spatial overlap between points and polygons looking for the points that fall over the ecoregions (can take a while 10-15minutes)
 points_with_ecoregions <- over(datos, ecoregions)
@@ -146,7 +190,7 @@ datos_df<-as.data.frame(datos) #convert back to data.frame before saving it to c
 head(datos_df)
 
 # Save the rised cath with the ecoregion info added at the end. Once you do this once, you dont´t need to do it anymore and just use the file created for analysis
-write.csv(datos_df,file="Rised_catch_5sp_with_ecoregions.csv") # SAVE FILE
+write.csv(datos_df,file="Rised_catch_5sp_with_the_model_ecoregions.csv") # SAVE FILE
 ##################################################
 
 ### Yet there is a problem
@@ -188,30 +232,50 @@ proj4string(catches_ecoregion) <- proj4string(ecoregion)
 # Find where catch points lie within the IOTC grid
 # We make a vector of logical values (true or false) of which points fall inside the ecorregions
 inside.grid <- !is.na(over(catches_ecoregion, as(ecoregion, "SpatialPolygons"))) 
+inside.grid <- catches_ecoregion[!is.na(catches_ecoregion$Ecoregion_name), ] #subset with only the lines that fall inside the ecorregions area
+outside <- catches_ecoregion[is.na(catches_ecoregion$Ecoregion_name), ] #subset with all the lines that fall on land and have NA in the ecoregion value
 
 summary(inside.grid)
 
-# Points inside ecoregion
+#points inside ecoregion
 head(catches_ecoregion)
 
-# We create a data frame called inside with all the points that fall inside the ecorregions and have an ecoregion assigned
-inside<-as.data.frame(catches_ecoregion[inside.grid,]) 
+n <- nrow(inside.grid)
+chunk_size <- ceiling(n / 20)  # Divide into 20 chunks for faster processing
+
+# This function converts every chunk of the inside.grid data into spatial data and then convertts it into a data frame
+convert_chunk <- function(start, end) {
+  message(paste("Procesando chunk", start, "-", end))
+  spdf_chunk <- inside.grid[start:min(end, n), ]
+  sf_df_chunk <- st_as_sf(spdf_chunk)
+  as.data.frame(sf_df_chunk)
+}
+
+# Here we unite all resulting dataframes into one big data frame called inside
+inside <- bind_rows(
+  lapply(seq(1, n, by = chunk_size), function(i) {
+    convert_chunk(i, i + chunk_size - 1)
+  })
+)
 dim(inside)
 
 #### points outside
 outside<-catches_ecoregion[!inside.grid,]
 dim(outside)
 
-# Transform the coordinates of the points that fall outside the ecoregions into a data frame
-catch_coords<-as.data.frame(unique(outside@coords)) 
+proj4string(outside)<-CRS("+proj=longlat +datum=WGS84 +no_defs") # This assigs the coordinate systems
+proj4string(outside)
+
+unique_coords <- unique(outside[, c("longitude", "latitude")]) # Creates a data frame with each unique combination of latitude and longitude in the outside dataframe
+catch_coords<-(unique(outside@coords))
 head(catch_coords)
-dim(catch_coords) # this tells us how many points fall outside the IOTC grid
+dim(catch_coords) # This tells us how many points fall outside the IOTC grid
 outside<-as.data.frame(outside) # Transform it into a data frame
 
 library(rgeos)
 
-coordinates(catch_coords)<-c('longitude','latitude') # Trasnform it into a data frame of coordinates
-proj4string(catch_coords)<-proj4string(ecoregion)  # Assign the same CRS
+coordinates(unique_coords)<-c('longitude','latitude') # Trasnform it into a data frame of coordinates
+proj4string(unique_coords)<-proj4string(ecoregion)  # Assign the same CRS
 
 head(outside)
 ##############################
@@ -220,25 +284,29 @@ head(outside)
 
 #First we do it for the column ecoregion$Ecoregion
 grid<-NULL
-for (i in 1:length(catch_coords)) {
-  grid[i] <- ecoregion$Ecoregion[which.min(gDistance(catch_coords[i,], ecoregion, byid=TRUE))] # Here for each value of a pair of lat and long in registerd in the catch coordinates it finds the nearest ecoregion 
+for (i in 1:length(unique_coords)) {
+  grid[i] <- ecoregion$Ecoregion[which.min(gDistance(unique_coords[i,], ecoregion, byid=TRUE))] # Here for each value of a pair of lat and long in registerd in the catch coordinates it finds the nearest ecoregion 
 
   # Here it assigns to the outside data frame, for each pair of catch_coordinates, the Ecoregion assigned to that point in the previous step
-  outside[which(outside$latitude==catch_coords@coords[i,2] & outside$longitude==catch_coords@coords[i,1]),'Ecoregion_name']<-grid[i] 
+  outside[which(outside$latitude==unique_coords@coords[i,2] & outside$longitude==unique_coords@coords[i,1]),'Ecoregion_name']<-grid[i] 
 }
 
 warnings() 
 #Second we do it for the column ecoregion$Region_ID 
 grid<-NULL
-for (i in 1:length(catch_coords)) {
-  grid[i] <- ecoregion$Region_ID[which.min(gDistance(catch_coords[i,], ecoregion, byid=TRUE))]
+for (i in 1:length(unique_coords)) {
+  grid[i] <- ecoregion$Region_ID[which.min(gDistance(unique_coords[i,], ecoregion, byid=TRUE))]
   
-  outside[which(outside$latitude==catch_coords@coords[i,2] & outside$longitude==catch_coords@coords[i,1]),'Ecoregion_ID']<-grid[i]
+  outside[which(outside$latitude==unique_coords@coords[i,2] & outside$longitude==unique_coords@coords[i,1]),'Ecoregion_ID']<-grid[i]
 }
 
 head(grid)
 head(outside)
 summary(outside)
+
+# Rename in the inside dataframe the longitude2 and latitude2 to longitude and latitude
+names(inside)[13] <- 'longitude'
+names(inside)[14] <- 'latitude'
 
 ggplot(data = world) +
   geom_polygon(data = ecoregions, aes(x = long, y = lat, group = group), colour = "grey10", fill = NA)+
@@ -258,8 +326,33 @@ ggplot(data = world) +
   ggtitle("Point assignation by ecorregion")
 ##############################
 
-# Now that we have assiged all the "outside" points to an ecoregion, then combine both, the inside points and outside points into a database again.
-Rised_catch_5sp_catches_ecoregion_reasinged<-rbind(inside,outside)
+write.csv(inside,file="inside.csv")
+write.csv(outside,file="outside.csv")
+
+# rename all the columns of the inside and outside dataframes so they match
+colnames(inside) <- c('no1', 'Species', 'Year', 'Month', 'Grid_size', 'Hemisphere', 'Gear', 'SchoolType', 'Fleet', 'Num', 'MT', 'Longitude', 'Latitude', 
+           'Ecoregion_name', 'no', 'no2')
+colnames(outside) <- c('no1', 'no2', 'Species', 'Year', 'Month', 'Grid_size', 'Hemisphere','Latitude', 'Longitude', 'Gear', 'SchoolType', 'Fleet', 'Num', 'MT', 'Long', 'Lat',
+                      'Ecoregion_name')
+# Changes columns order to match Outside df
+inside <- inside %>%
+  select(1:6, 12:13, 7:11, 14:ncol(inside))
+inside <- inside %>%
+  select(1:6, 8, 7, 9:ncol(inside))
+
+# Delate the columns that we don't need
+inside[1] <- NULL
+inside[15] <- NULL
+inside[14] <- NULL
+
+outside[16] <- NULL
+outside[15] <- NULL
+outside[2] <- NULL
+outside[1] <- NULL
+
+#now that we have assiged all the "outside" points to an ecoregion, then combine both, the inside points and outside points into a database again.
+Rised_catch_5sp_catches_ecoregion_with_model_reasinged<-rbind(inside,outside)
+
 dim(Rised_catch_5sp_catches_ecoregion_reasinged)
 summary(Rised_catch_5sp_catches_ecoregion_reasinged)
 
@@ -272,10 +365,6 @@ levels(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_ID)
 
 summary(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_name)
 summary(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_ID)
-
-
 # Ready to be save. You just need to do this once. And then just use ir for analysis.
-
-write.csv(Rised_catch_5sp_catches_ecoregion_reasinged, "Rised_catch_5sp_catches_ecoregion_reasinged.csv")
-
+write.csv(Rised_catch_5sp_catches_ecoregion_with_model_reasinged, "Rised_catch_5sp_catches_ecoregion_with_model_reasinged.csv")
 ##################################################################################################################
