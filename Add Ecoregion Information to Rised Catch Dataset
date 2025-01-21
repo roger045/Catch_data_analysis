@@ -1,1 +1,292 @@
-# Script to Add Ecoregion Information to Rised Catch Dataset
+##################################################
+# This files, opens Rised catch, opens IOTC shapefile, add the ecoregion information into the Rised catch dataset,
+# then identify points outside the ecoregions which where assinged NAs, and find the closest ecoregion and assignes
+# the closest ecoregions to the NAs.
+#Use:
+#5sp_Rised_catch.csv
+#IOEcorregions.shp
+##################################################
+
+
+
+library("ggplot2")
+library('dplyr')
+library('tidyr')
+theme_set(theme_bw())
+library("sf")
+library("rnaturalearth")
+library("rnaturalearthdata")
+library('rgdal')
+library("rgeos")
+library("maps")
+library(rgdal)
+library(sf)
+
+
+rm(list=ls())
+setwd("C:/Use/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/6.Ecor_fleet_reassing")
+
+##################################################
+#read catdis
+##################################################
+
+datos<-read.csv("5sp_Rised_catch.csv",sep=";")
+head(datos)
+names(datos)
+summary(datos)
+class(datos)# see how it is a data.frame
+
+##################################################
+#read shapefile
+##################################################
+
+ecoregions<-readOGR("IOEcorregions.shp", layer="IOEcorregions")
+class(ecoregions) # see how it is a "SpatialPolygonsDataFrame"
+
+### plot ecoregions and points
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+
+##################################################
+#Transform fishing ground code into latitude and longitude
+##################################################
+
+# Split grid column into: size, quadrant, latitude and longitude
+# In Grid size: 6=5ºx5º
+# In hemisphere: 1=N and 2=S
+datos <- datos %>% separate(col = FISHING_GROUND_CODE, sep = c(1, 2, 4), 
+                            into = c("Grid_size", "hemisphere", "latitude", "longitude"))
+head(datos)
+str(datos) 
+# We have to convert the new columns from chracter to numeric 
+datos$hemisphere <- as.numeric(datos$hemisphere)
+datos$latitude <- as.numeric(datos$latitude)
+datos$longitude <- as.numeric(datos$longitude)
+str(datos) 
+summary(datos)
+
+# Add a negative sign in front of latitudes if their hemisphere=2(SH)
+datos$latitude <- ifelse(datos$hemisphere==2, -datos$latitude, datos$latitude)
+
+# Transform the latitude and longitude so they represent the center of the 
+# square and not the borders of it.
+# In the northern hemisphere we have to add 2.5, and in the southern hemisphere we have to 
+# add -2.5
+datos$latitude <- ifelse(datos$hemisphere==2, -2.5+datos$latitude, 2.5+datos$latitude)
+
+# 3rd, correct the value of the longitude to be in the middle of the square.
+# As all our values are in the Eastern hemisphere, we only need to add 0.5
+# to all the values
+
+datos$longitude <- 2.5+datos$longitude
+
+# Trim white spaces
+datos$FLEET_CODE <- trimws(datos$FLEET_CODE)
+
+
+
+##################################################
+# Visualizing which points fall over land
+##################################################
+
+ggplot(data = world) + geom_polygon(data = ecoregions, aes(x = long, y = lat, group = group), colour = "red", 
+                                    fill = NA) +geom_point(data=datos,aes(x=longitude, y=latitude)) 
+# notice how some points are OUTSIDE the ecoregions OVER land. when we merge the shapefile with the Rised catches 
+# points, this points over land will be assigned a NA. There are ways to fix this. But so far, we are not fixing it.
+
+
+##################################################
+# Transforming and merging rised cath and the ecorregions
+##################################################
+
+### To merge the Rised Catch and Ecoregion_they need to be the same class, and have the same Coordinates System.
+
+proj4string(ecoregions) #"+proj=longlat +datum=WGS84 +no_defs
+proj4string(datos) # this is a dataframe, and below we convert it to a "SpatialPointsDataFrame"
+
+datos$longitude2<-datos$longitude #just making a copy
+datos$latitude2<-datos$latitude #just making a copy
+
+coordinates(datos) <- ~longitude2 + latitude2 # converts DATOS into a "SpatialPointsDataFrame"
+class(datos) # see how now it is "SpatialPointsDataFrame"
+proj4string(datos) #still not coordiantes systems 
+
+proj4string(datos)<-CRS("+proj=longlat +datum=WGS84 +no_defs") #this assigs the coordinate systems
+proj4string(datos) 
+
+
+datos<-spTransform(datos,CRS(proj4string(ecoregions)))
+
+identical(proj4string(datos),proj4string(ecoregions)) # We want to see here TRUE
+
+
+##################################################
+# Find overlaping and adding extra column to Rised catch
+##################################################
+
+# Now we find the overlap between the points and poligons of the shapefiles so we can add the extra columns with
+# ecoregion information into the Rised catch database 
+
+# Here we do the spatial overlap between points and polygons
+points_with_ecoregions <- over(datos, ecoregions)
+
+class(points_with_ecoregions)
+head(points_with_ecoregions) #we still need to add the data attributes from the ecoregion shapefiles to the datapoint file. 
+datos$Ecoregion_name <- points_with_ecoregions$Ecoregion #important line
+datos$Ecoregion_ID <- points_with_ecoregions$Region_ID #important line
+
+
+datos$Ecoregion_name<-as.factor(datos$Ecoregion_name)
+datos$Ecoregion_ID<-as.factor(datos$Ecoregion_ID)
+class(datos)
+summary(datos)
+levels(datos$Ecoregion_name)
+
+class(datos) # still it is a "SpatialPointsDataFrame"
+dim(datos)
+
+datos_df<-as.data.frame(datos) #convert back to data.frame before saving it to csv
+head(datos_df)
+
+######
+#save catdis with the ecoregion info added at the end. Once you do this once, you dont´t need to do it anymore and just use the file "CATDIS_with_ecoregions.csv" for analysis
+######
+write.csv(datos_df,file="Rised_catch_5sp_with_ecoregions.csv") # SAVE FILE
+
+
+### Yet there is a problem
+### Plot the data - # see how there are some points are still OUTSIDE the ecoregions and OVER LAND. For those points the ecoregion assiged was a NA-we need to fix this.
+ggplot(data = world) + 
+  geom_polygon(data = ecoregions, aes(x = long, y = lat, group = group), colour = "red", fill = NA) +geom_point(data=datos_df,aes(x=longitude, y=latitude)) 
+
+
+###################################################
+### Code for reasigning points outside poligons (ecoregions) to the closest poligons (ecoregions)
+#########################################################
+#########################################################
+#########################################################
+
+#open the Rised catch with the ecoregion information that we added in the previous step
+catches_ecoregion <-read.csv("Rised_catch_5sp_with_ecoregions.csv", header=TRUE, sep=",")
+
+head(catches_ecoregion)
+
+summary(catches_ecoregion)
+
+#read and plot ecoregion poligons
+
+ecoregions_shp="IOEcorregions.shp"
+ecoregion<-readOGR(dsn = ecoregions_shp, stringsAsFactors = F)
+
+#plot shapefile and points of catches
+ggplot() + geom_polygon(data = ecoregion, aes(x = long, y = lat, group = group), colour = "grey", fill = NA) + geom_point(data=catches_ecoregion, aes(longitude,latitude))
+
+##############################
+##### reassign outside cells with NA values into ecoregions shapefile
+########################################
+
+# convert to data.frame>spatialpointsdataframe
+coordinates(catches_ecoregion)<- c("longitude","latitude")
+
+# assign same projection as Ecoregion shapefile
+proj4string(catches_ecoregion) <- proj4string(ecoregion)
+
+
+# removes the data points outside the IOTC grid
+# if(remove_points==TRUE){
+# find where catch points lie within the IOTC grid
+inside.grid <- !is.na(over(catches_ecoregion, as(ecoregion, "SpatialPolygons"))) # Here we make
+# a vector of logical values (true or false) of which points fall inside the ecorregions
+
+summary(inside.grid)
+
+#points inside ecoregion
+head(catches_ecoregion)
+inside<-as.data.frame(catches_ecoregion[inside.grid,]) # Here we create a df called inside with all the points that
+# fall inside the ecorregions 
+
+dim(inside)
+
+#### points outside
+
+outside<-catches_ecoregion[!inside.grid,]
+dim(outside)
+
+
+catch_coords<-as.data.frame(unique(outside@coords))
+head(catch_coords)
+dim(catch_coords) # this tells us how many points fall outside the IOTC grid
+
+outside<-as.data.frame(outside)
+
+library(rgeos)
+
+coordinates(catch_coords)<-c('longitude','latitude')
+proj4string(catch_coords)<-proj4string(ecoregion)
+
+head(outside)
+
+#this code finds the distance of a point to all the ecoregins, and picks the smallest distance, and then assigns the name of the ecoregions to the Columns Ecoregion_name, which before had a NA
+
+#First we do it for the column ecoregion$Ecoregion
+grid<-NULL
+for (i in 1:length(catch_coords)) {
+  grid[i] <- ecoregion$Ecoregion[which.min(gDistance(catch_coords[i,], ecoregion, byid=TRUE))]
+  
+  outside[which(outside$latitude==catch_coords@coords[i,2] & outside$longitude==catch_coords@coords[i,1]),'Ecoregion_name']<-grid[i]
+}
+
+warnings()#Second we do it for the column ecoregion$Region_ID 
+grid<-NULL
+for (i in 1:length(catch_coords)) {
+  grid[i] <- ecoregion$Region_ID[which.min(gDistance(catch_coords[i,], ecoregion, byid=TRUE))]
+  
+  outside[which(outside$latitude==catch_coords@coords[i,2] & outside$longitude==catch_coords@coords[i,1]),'Ecoregion_ID']<-grid[i]
+}
+
+head(grid)
+head(outside)
+summary(outside)
+
+ggplot(data = world) +
+  geom_polygon(data = ecoregions, aes(x = long, y = lat, group = group), colour = "grey10", fill = NA)+
+  geom_sf(color = "darkgrey", fill = "lightgrey")+
+  coord_sf(xlim = c(10,160), ylim = c(40,-60), expand = FALSE)+ 
+  geom_point(data=outside, aes(longitude,latitude), size=3, col='red') + 
+  geom_point(data=inside, aes(longitude,latitude), size=3,col="blue") +
+  ggtitle("Inside and outside points")
+
+### making sure the asigments have been done correct!
+ggplot(data = world) +
+  geom_polygon(data = ecoregions, aes(x = long, y = lat, group = group), colour = "grey10", fill = NA)+
+  geom_sf(color = "darkgrey", fill = "lightgrey")+
+  coord_sf(xlim = c(10,160), ylim = c(40,-60), expand = FALSE)+ 
+  geom_point(data=outside, size=3, aes(longitude,latitude, col=Ecoregion_name)) + 
+  geom_point(data=inside, size=3, aes(longitude,latitude,col=Ecoregion_name)) +
+  ggtitle("Point assignation by ecorregion")
+
+
+#now that we have assiged all the "outside" points to an ecoregion, then combine both, the inside points and outside points into a database again.
+Rised_catch_5sp_catches_ecoregion_reasinged<-rbind(inside,outside)
+
+dim(Rised_catch_5sp_catches_ecoregion_reasinged)
+summary(Rised_catch_5sp_catches_ecoregion_reasinged)
+
+Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_name<-as.factor(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_name)
+
+Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_ID<-as.factor(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_ID)
+
+levels(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_name)
+levels(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_ID)
+
+summary(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_name)
+summary(Rised_catch_5sp_catches_ecoregion_reasinged$Ecoregion_ID)
+
+
+#ready to be save. You just need to do this once. And then just use "CATDIS_with_ecoregions_outside_pointsreasigned.csv" for analysis.
+
+write.csv(Rised_catch_5sp_catches_ecoregion_reasinged, "Rised_catch_5sp_catches_ecoregion_reasinged.csv")
+
+##################################################################################################################
+
+
