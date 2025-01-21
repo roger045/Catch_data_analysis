@@ -1,7 +1,7 @@
 ################################################################################
 ###### Script to calculate which fleets are fishing inside the model area ###### 
-###### and how many catches of the are made inside/outside our model area ######
-###### Tropical tunas: ALB, YFT, BET, SKJ, SWO                            ######
+###### and how many catches are made inside/outside our model area        ######
+###### Species included in the dataset: ALB, YFT, BET, SKJ, SWO           ######
 ###### Author: Roger Amate (AZTI)                                         ######
 ###### year: 2023                                                         ######
 ################################################################################
@@ -19,8 +19,8 @@ library(ggplot2)
 library(readr)
 library(hrbrthemes)
 
-# Set the working directory
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch data/2022_Data/csv")
+# Set the working directory where the dataset is saved
+setwd("~/...")
 
 
 #--------------------------------Data preparation------------------------------#
