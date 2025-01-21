@@ -135,27 +135,24 @@ All_fleets <- Fleets_21y_wide$Fleet # Vector of all the fleets that fish, inside
 Fleets_outside_model_area <- Fleets_21y_wide %>% subset(Model_area == 0)
 Fleets_outside_model_area
 
-Outside_fleets <- Fleets_outside_model_area$Fleet # Vector of all the fleets taht doesn't fish anything inside the model area
+Outside_fleets <- Fleets_outside_model_area$Fleet # Vector of all the fleets that doesn't fish anything inside the model area
 
-# Extract the fleets that all their catches are inside the study area
+# Extract the fleets for which their catches are ONLY INSIDE the study area
 Fleets_fully_model_area <- Fleets_21y_wide %>% subset(Model_area != 0 & `Southern Ocean`==0 & `Leeuwin Current`==0 
                                                       & `Indian Ocean Gyre`==0 & `Aghullas Current`==0)
 Fleets_fully_model_area
 
-Fully_model_area_fleets <- Fleets_fully_model_area$Fleet
-
+Fully_model_area_fleets <- Fleets_fully_model_area$Fleet # Vector of the fleets that only fish inside the model area
 
 # Extract the fleets that part of their catches are inside the study area
 Fleets_partially_model_area <- Fleets_21y_wide %>% subset(Model_area != 0 & (`Southern Ocean`!=0 | `Leeuwin Current`!=0 
                                                       | `Indian Ocean Gyre`!=0 | `Aghullas Current`!=0))
 Fleets_partially_model_area
 
-Partially_model_area_fleets <- Fleets_partially_model_area$Fleet
-
-
+# Vector of the fleets that fish inside and outside the model area
+Partially_model_area_fleets <- Fleets_partially_model_area$Fleet 
 
 ################################  Extract the % of catches per Ecoregion ################################################
-
 Fleets_21y_perc <- Fleets_21y_wide
 
 # First we calculate the total sumation of all cels
@@ -163,25 +160,18 @@ total_catches <- sum(Fleets_21y_perc[,-1]) # exclude the first row and column as
 
 # Then we divide each cell by the total and multiply it by 100 to obtain the % excluding first row and column
 Fleets_21y_perc[, -1] <- Fleets_21y_perc[, -1] / total_catches * 100 
-
-# 
 Fleets_21y_perc
 
 # Ecoregion % 
-
 catch_perc_ecoregion <-colSums(Fleets_21y_perc[,-1])
-
 sum(catch_perc_ecoregion)
 
 ################################  Extract the % of catches per SPECIES_GROUP ################################################
-
 Fleets <- aggregate(MT ~ Ecoregion_name + SPECIES_GROUP, data = catch_21y, sum) 
 
-# Change the df configuration so now the SPECIES_GROUP are the columns
+# Change the data frame configuration so now the SPECIES_GROUP are the columns
 Fleets_wide <- Fleets %>% pivot_wider(names_from = SPECIES_GROUP, values_from = MT)
-
 Fleets_wide
-
 Fleets_perc <- Fleets_wide
 
 # First we calculate the total sumation of all cels
@@ -189,25 +179,17 @@ total_catches <- sum(Fleets_perc[, -1]) # exclude the first row and column as th
 
 # Then we divide each cell by the total and multiply it by 100 to obtain the % excluding first row and column
 Fleets_perc[, -1] <- Fleets_perc[, -1] / total_catches * 100 
-
-# 
 Fleets_perc
 
 # Species group % 
-
 catch_perc_species_group <-colSums(Fleets_perc[,-1])
-
 sum(catch_perc_species_group)
 
 ##################################  Extract the % of catches per Species ################################################
-
 catch_per <- aggregate(MT ~ Ecoregion_name + Species, data = catch_21y, sum) 
-
-# Change the df configuration so now the SPECIES_GROUP are the columns
+# Change the data frame configuration so now the SPECIES are the columns
 catch_wide <- catch_per %>% pivot_wider(names_from = Species, values_from = MT)
-
 catch_wide
-
 catch_perc <- catch_wide
 
 # First we calculate the total sumation of all cels
@@ -215,28 +197,21 @@ total_catches <- sum(catch_perc[, -1]) # exclude the first row and column as the
 
 # Then we divide each cell by the total and multiply it by 100 to obtain the % excluding first row and column
 catch_perc[, -1] <- catch_perc[, -1] / total_catches * 100 
-
-# 
 catch_perc
 
-# Species group % 
-
+# Species % 
 catch_perc_species <-colSums(catch_perc[,-1])
-
 sum(catch_perc_species)
 
 ##################################  Extract the % of catches per Gear ################################################
+gear_per <- aggregate(MT ~ Ecoregion_name + Gear_code, data = Fleets, sum)
 
-gear_per <- aggregate(MT ~ Ecoregion_name + Gear_code, data = Fleets, sum) 
-
-# Change the df configuration so now the SPECIES_GROUP are the columns
+# Change the data frame configuration so now the GEAR_CODE are the columns
 gear_wide <- gear_per %>% pivot_wider(names_from = Gear_code, values_from = MT)
 
 # Fill NA values with 0
 gear_wide  <- replace(gear_wide , is.na(gear_wide ), 0)
-
 gear_wide
-
 gear_perc <- gear_wide
 
 # First we calculate the total sumation of all cels
@@ -244,28 +219,21 @@ gear_catches <- sum(gear_perc[, -1]) # exclude the first row and column as they 
 
 # Then we divide each cell by the total and multiply it by 100 to obtain the % excluding first row and column
 gear_perc[, -1] <- gear_perc[, -1] / gear_catches * 100 
-
-# 
 gear_perc
 
-# Species group % 
-
+# Gear % 
 gear_perc_er <-colSums(gear_perc[,-1])
-
 sum(gear_perc_er)
 
 ##################################  Extract the % of catches per Gear x Species #########################################
-
 gear_sp <- aggregate(MT ~ Species + Gear_code, data = Fleets, sum) 
 
-# Change the df configuration so now the SPECIES_GROUP are the columns
+# Change the data frame configuration so now the SPECIES are the columns
 gearsp_wide <- gear_sp %>% pivot_wider(names_from = Species, values_from = MT)
 
 # Fill NA values with 0
 gearsp_wide  <- replace(gearsp_wide , is.na(gearsp_wide ), 0)
-
 gearsp_wide
-
 gear_sp <- gearsp_wide
 
 # First we calculate the total sumation of all cels
@@ -273,14 +241,10 @@ gearsp_catches <- sum(gear_sp[, -1]) # exclude the first row and column as they 
 
 # Then we divide each cell by the total and multiply it by 100 to obtain the % excluding first row and column
 gear_sp[, -1] <- gear_sp[, -1] / gearsp_catches * 100 
-
-# 
 gear_sp
 
-# Species group % 
-
+# Gear x Species % 
 gearsp <-colSums(gear_sp[,-1])
-
 sum(gearsp)
 
 
@@ -294,14 +258,12 @@ gear_sp <- gear_sp%>%subset(Ecoregion_name=='Model_area') # Subset the data for 
 #Delate the Ecoregion_name column
 gear_sp[,3] <- NULL
 
-# Change the df configuration so now the SPECIES_GROUP are the columns
+# Change the data frame configuration so now the SPECIES_GROUP are the columns
 gearsp_wide <- gear_sp %>% pivot_wider(names_from = Species, values_from = MT)
 
 # Fill NA values with 0
 gearsp_wide  <- replace(gearsp_wide , is.na(gearsp_wide ), 0)
-
 gearsp_wide
-
 gear_sp <- gearsp_wide
 
 # First we calculate the total sumation of all cels
@@ -309,36 +271,29 @@ gearsp_catches <- sum(gear_sp[, -1]) # exclude the first row and column as they 
 
 # Then we divide each cell by the total and multiply it by 100 to obtain the % excluding first row and column
 gear_sp[, -1] <- gear_sp[, -1] / gearsp_catches * 100 
-
-# 
 gear_sp
 
-# Species group % 
-
+# Gear x Species % in the model area 
 gearsp <-colSums(gear_sp[,-1])
-
 sum(gearsp)
 
 
 #############################  Extract the % of catches of PS x SchoolType & Species in the model area ######################################
-
 gear_sp <- aggregate(MT ~ Species + Gear_code + Ecoregion_name, data = Fleets_21y, sum) 
 
 #Subset only the catches in the model area
 gear_sp <- gear_sp%>%subset(Ecoregion_name=='Model_area') # Subset the data for the years that we want
-
 gear_sp <- gear_sp%>%subset(Gear_code=='PSFS' | Gear_code=='PSLS')
+
 #Delate the Ecoregion_name column
 gear_sp[,3] <- NULL
 
-# Change the df configuration so now the SPECIES_GROUP are the columns
+# Change the data frame configuration so now the SPECIES_GROUP are the columns
 gearsp_wide <- gear_sp %>% pivot_wider(names_from = Species, values_from = MT)
 
 # Fill NA values with 0
 gearsp_wide  <- replace(gearsp_wide , is.na(gearsp_wide ), 0)
-
 gearsp_wide
-
 gear_sp <- gearsp_wide
 
 # First we calculate the total sumation of all cels
@@ -346,14 +301,10 @@ gearsp_catches <- sum(gear_sp[, -1]) # exclude the first row and column as they 
 
 # Then we divide each cell by the total and multiply it by 100 to obtain the % excluding first row and column
 gear_sp[, -1] <- gear_sp[, -1] / gearsp_catches * 100 
-
-# 
 gear_sp
 
 # Species group % 
-
 gearsp <-colSums(gear_sp[,-1])
-
 sum(gearsp)
 
 
