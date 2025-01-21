@@ -1,6 +1,7 @@
 
 #########################################################################################################################
 ###### This script opens the raw Rised catch database previously obtained from IOTC (.csv)                         ######
+###### Merges the 5 species .csv files previousli separated manually                                               ######
 ###### Opens the shapefile created with the ecoregions of our interest (.shp)                                      ######
 ###### Adds the ecoregion information into the Rised catch dataset based on the latitude and longitude parameters  ######
 ###### Identifys points outside the ecoregions which where assinged NAs                                            ######
