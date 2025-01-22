@@ -24,194 +24,146 @@ dir.YFT=".../8. Lectura de fichers/latest_SA_files/YFT/io_h80_q1_Gbase_Mbase_tla
 dir.SKJ=".../8. Lectura de fichers/latest_SA_files/SKJ/io_h80_Ua_q0_L70/"                 # It's a example
 
 #######################################################    BIGEYE   ####################################################
-SA_BET=SS_output(dir.BET, covar=FALSE)  # Esto lee todo el output del assessment del "Report.soo".
+SA_BET=SS_output(dir.BET, covar=FALSE)  # This reads the outputs of the assessment from "Report.soo".
 
 # To diferentiate juveniles from adults, we will use the 50% maturity. First we obtain the size at 50% maturity from
 #SA_BET_parameters, and then we check to which age that size corresponds in the endgrowth:
 x=which(SA_BET$parameters$Label=="Mat50%_Fem_GP_1")   
-size50Mat=SA_BET$parameters[x,"Value"]       # This is the size at 50% maturity. Now we pass it to age class.
+size50Mat=SA_BET$parameters[x,"Value"]                 # This is the size at 50% maturity. Now we pass it to age class.
 age_length=SA_BET$endgrowth[,c("Age_Beg", "Len_Mid")]  # Here we can see that the fish of sizes =>110 are fish older than 16 quarters (4 years).
+Catch_at_age <- SA_BET$catage # This are the cathces of bigeye by fleet and age (from 0 to 40)
 
-# Con esto entiendo que puedes obtener las matrices de biomasa x edad x año y separar juveniles y adultos.
-
-Catch_at_age <- SA_BET$catage # Esto son capturas por area, flota, sexo, tipo... La matriz es muy parecida a la anterior, te interesan el area, la flota, el año y el resto
-# las edades de 0 a 40.
+# Save the dataset as a .csv
 write.csv(Catch_at_age, 'BET_catch_at_age.csv')
+SA_BET$definitions # This allows us to check the gear that each fleet corresponds. In this case the flag is not important, 
+                   # as it is only the gear used what describes the interaction of the fishery with each size class
+SS_plots(SA_BET)   # This function automatically makes almost all figures of the outputs in an internet explorer page. 
 
-SA_BET$definitions # Esto permite ver a que corresponde cada flota. En las evaluaciones no importa el país, sino el arte, que es el que describe la interacción
-# con cada clase de talla
+#######################################################    YELLOWFIN   ##################################################
 
-SS_plots(SA_BET) # La función SS_plots hace automaticamente casi todas las figuras de la libreria con los datos.
+SA_YFT=SS_output(dir.YFT, covar=FALSE)  # This reads the outputs of the assessment from "Report.soo".
 
-
-
-#######################################################    Yellowfin   ####################################################
-
-SA_YFT=SS_output(dir.YFT, covar=FALSE)  # Esto lee todo el output del assessment del "Report.soo".
-
-# Biomasss
-Biomass_YFT <- SA_YFT$timeseries
-write.csv(Biomass_YFT, 'Biomass_YFT.csv')
-
-# Biomass at age
-SA_YFT$batage # Biomass At Age: Esto son las matrices que hemos comentado: Tenemos Area (de 1 a 4), 
-# Bio_Pattern, Sex, BirthSeas, Settlement, Platoon, Morph (ni caso, siempre 1)
-# Yr (de 191 a 420 para el BET, son indices de quarter_year, 13 corresponde a 1950 y 301 a 2022). 
-# Seas (siempre 1), Beg/Mid, esto se refiere al valor medio de ese quarter o al inicio (muy parecidos, elige uno),
-# Era: Se refiere a la inicialización, No hay que tener en cuenta los dos primeros valores (las dos primeras filas)
-# clases de edad de 0 a 28 (YFT), son cuartos, es decir, la edad máxima de biomasa explotada son 7 años. 
-# Para diferenciar juveniles/adultos, solemos usar el 50% madurez. Primero obtenemos la talla del 50% de madurez de 
-# SA_YFT$parameters, y luego ver a qué edad corresponde esa talla en el endgrowth. Te lo hago aqui:
+# To diferentiate juveniles from adults, we will use the 50% maturity. First we obtain the size at 50% maturity from
+# SA_YFT_parameters, and then we check to which age that size corresponds in the endgrowth:
 x=which(SA_YFT$parameters$Label=="Mat50%_Fem_GP_1")
-size50Mat=SA_YFT$parameters[x,"Value"]   # Esta es la talla del 50% madurez. Ahora lo pasamos a clase de edad.
-age_length=SA_YFT$endgrowth[,c("Age_Beg", "Len_Mid")]  # de aquí puedes ver que los peces de talla 78 cm son peces de clase de edad superior a 9 (cuartos)
-# es decir unos 2.5 años.
+size50Mat=SA_YFT$parameters[x,"Value"]                 # This is the size at 50% maturity. Now we pass it to age class.
+age_length=SA_YFT$endgrowth[,c("Age_Beg", "Len_Mid")]  # Here we can see that the fish of sizes =>75 are fish older than 9 quarters (2.25 years)
+Catch_at_age <- SA_YFT$catage # This are the cathces of yellowfin by fleet and age (from 0 to 28)
 
-# Con esto entiendo que puedes obtener las matrices de biomasa x edad x año y separar juveniles y adultos.
-
-Catch_at_age <- SA_YFT$catage # Esto son capturas por area, flota, sexo, tipo... La matriz es muy parecida a la anterior, te interesan el area, la flota, el año y el resto
-# las edades de 0 a 28.
-
+# Save the dataset as a .csv
 write.csv(Catch_at_age, 'YFT_catch_at_age.csv')
-
-Biomass_at_age <- SA_YFT$batage # Esto son capturas por area, flota, sexo, tipo... La matriz es muy parecida a la anterior, te interesan el area, la flota, el año y el resto
-# las edades de 0 a 28.
-
-setwd("C:/Use/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/7. Stock_assessment/2. YFT")
-
-write.csv(Biomass_at_age, 'YFT_Biomass_at_age.csv')
-
-SA_YFT$definitions # Esto permite ver a que corresponde cada flota. En las evaluaciones no importa el país, sino el arte, que es el que describe la interacción
-# con cada clase de talla
+SA_YFT$definitions # This allows us to check the gear that each fleet corresponds. In this case the flag is not important, 
+                   # as it is only the gear used what describes the interaction of the fishery with each size class
+SS_plots(SA_YFT)   # This function automatically makes almost all figures of the outputs in an internet explorer page.
 
 
-SA_YFT$definitions # Esto permite ver a que corresponde cada flota. En las evaluaciones no importa el país, sino el arte, que es el que describe la interacción
-# con cada clase de talla
+#######################################################    SKIPJACK   ####################################################
 
-SS_plots(SA_YFT) # La función SS_plots hace automaticamente casi todas las figuras de la libreria con los datos.
+SA_SKJ=SS_output(dir.SKJ, covar=FALSE)  # This reads the outputs of the assessment from "Report.soo".
 
-
-#######################################################    Skipjack   ####################################################
-
-SA_SKJ=SS_output(dir.SKJ, covar=FALSE)  # Esto lee todo el output del assessment del "Report.soo".
-
-# Biomasss
-Biomass_SKJ <- SA_SKJ$timeseries
-write.csv(Biomass_SKJ, 'Biomass_SKJ.csv')
-
-# Biomass at age
-SA_SKJ$batage # Biomass At Age: Esto son las matrices que hemos comentado: Tenemos Area (de 1 a 4), 
-# Bio_Pattern, Sex, BirthSeas, Settlement, Platoon, Morph (ni caso, siempre 1)
-# Yr, 1950 corresponde a 1950 y 2022 a 2022). 
-# Seas (siempre 1), Beg/Mid, esto se refiere al valor medio de ese quarter o al inicio (muy parecidos, elige uno),
-# Era: Se refiere a la inicialización, No hay que tener en cuenta los dos primeros valores (las dos primeras filas)
-# clases de edad de 0 a 8 (SKJ), son años. 
-# Para diferenciar juveniles/adultos, solemos usar el 50% madurez. Primero obtenemos la talla del 50% de madurez de 
-# SA_YFT$parameters, y luego ver a qué edad corresponde esa talla en el endgrowth. Te lo hago aqui:
+# To diferentiate juveniles from adults, we will use the 50% maturity. First we obtain the size at 50% maturity from
+# SA_SKJ_parameters, and then we check to which age that size corresponds in the endgrowth:
 x=which(SA_SKJ$parameters$Label=="Mat50%_Fem_GP_1")
-size50Mat=SA_SKJ$parameters[x,"Value"]   # Esta es la talla del 50% madurez. Ahora lo pasamos a clase de edad.
-age_length=SA_SKJ$endgrowth[,c("Age_Beg", "Len_Mid")]  # de aquí puedes ver que los peces de talla 38 cm son peces de clase de edad superior a 3 (cuartos)
-# es decir <1 año de edad.
+size50Mat=SA_SKJ$parameters[x,"Value"]                 # This is the size at 50% maturity. Now we pass it to age class.
+age_length=SA_SKJ$endgrowth[,c("Age_Beg", "Len_Mid")]  # Here we can see that the fish of sizes =>38 are fish older than 3 quarters (0.75 years)
+Catch_at_age <- SA_SKJ$catage # This are the cathces of skipjack by fleet and age (from 0 to 8)
 
-# Con esto entiendo que puedes obtener las matrices de biomasa x edad x año y separar juveniles y adultos.
-
-Catch_at_age <- SA_SKJ$catage # Esto son capturas por area, flota, sexo, tipo... La matriz es muy parecida a la anterior, te interesan el area, la flota, el año y el resto
-# las edades de 0 a 8.
-
-Biomass_at_age <- SA_SKJ$batage # Esto son capturas por area, flota, sexo, tipo... La matriz es muy parecida a la anterior, te interesan el area, la flota, el año y el resto
-# las edades de 0 a 8.
-
-setwd("C:/Use/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/7. Stock_assessment/3. SKJ")
-
-write.csv(Biomass_at_age, 'SKJ_Biomass_at_age.csv')
+# Save the dataset as a .csv
 write.csv(Catch_at_age, 'SKJ_catch_at_age.csv')
-SA_SKJ$definitions # Esto permite ver a que corresponde cada flota. En las evaluaciones no importa el país, sino el arte, que es el que describe la interacción
-# con cada clase de talla
+SA_SKJ$definitions # This allows us to check the gear that each fleet corresponds. In this case the flag is not important, 
+                   # as it is only the gear used what describes the interaction of the fishery with each size class
+SS_plots(SA_SKJ)   # This function automatically makes almost all figures of the outputs in an internet explorer page.
 
-SS_plots(SA_SKJ) # La función SS_plots hace automaticamente casi todas las figuras de la libreria con los datos.
+####################################################### 
+
+# Set the working directory
+setwd("...")
+########################### Data preparation ######
+# read the data
+catage <- read.csv('BET_catch_at_age.csv', sep=',')
+catage[1] <- NULL # dalate the first column which is only an index
+head(catage)
+str(catage)
+
+# check for NA values
+any(is.na(catage)) # With this line we check if there are empty values (NA) in the database
+
+# Subset the dataframe with only the columns that contain information that interests us
+# which are: all the ones with the sizes (X0, X1, ...), Yr (191=1975 & 379=2022), Beg.Mid
+
+catage1 <- catage %>% select(-c('XX', 'Sex', 'XX.1', 'Type', 'Morph', 'Seas', 'XX.2', 'Era', 'Area'))
+
+# From the column Beg.Mid, we have to select one value, B or M. B is the value at the beginning, and M is 
+# the value at the middle. I selected M because the values of biomass are smaller, and therefore the future measures that 
+# that could be taken from the results are more conservative. 
+
+catage2 <- catage1 %>% subset(Yr>=193 & Yr<=384) #Cambiar el valor segun la especie BET:193-384; YFT:13-304
+unique(catage2$Yr)
+unique(catage2$Fleet)
+class(catage2$Fleet)
+
+# Change Fleet numbers by the gear of the fleet
+catage2$Fleet <- ifelse(catage2$Fleet==1, 'LL', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==2, 'LL', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==3, 'LL', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==4, 'LL', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==5, 'PSFS', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==6, 'PSFS', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==7, 'Others', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==8, 'Others', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==9, 'PSLS', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==10, 'PSLS', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==11, 'BB', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==12, 'LI', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==13, 'LL', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==14, 'PSFS', catage2$Fleet)
+catage2$Fleet <- ifelse(catage2$Fleet==15, 'PSLS', catage2$Fleet)
+
+# Save the dataset as a .csv
+write.csv(catage2, 'BET_catch_at_age_by_gear.csv')
+#catage2 <- read.csv('BET_catch_at_age_by_gear.csv', sep=',')
+
+# convert Yr column to a character column
+class(catage2$Yr)
+catage2$Yr <- as.numeric(catage2$Yr)
+################################
+
+################################   BAITBOAT  ######
+catage2BB <- catage2 %>% subset(Fleet=='BB')
+
+# Aggregate by the quarter (Yr) 
+catage3BB <- aggregate(. ~ Fleet + Yr, data=catage2BB, sum)
+Year <- expand_grid(Year = seq(1975, 2022), Repetition = 1:4)
+Year[,2] <- NULL
+catage3BB <- cbind(Year, catage2BB)
+catage3BB[,c(2,3)] <- NULL
+BET_BB_catage <- aggregate(. ~ Year, data=catage3BB, mean)
+
+# Save the dataset as .csv
+write.csv(BET_BB_catage, 'BET_BB_catage.csv')
+
+# Juvenile and adults total catch by year calculation
+BET_BB_catage_Juv_Adu <- BET_BB_catage %>%
+  mutate(Juv_Catch = rowSums(.[,2:18]),      # Change the values according to the species: BET:2:18-19:42; YFT:2:11-12:28; SKJ: 2 - 3:9
+         Adu_Catch = rowSums(.[, 19:42])) %>%
+  select(Year, Juv_Catch, Adu_Catch)
+BET_BB_catage_Juv_Adu # See the dataframe
+
+# Save the dataset as .csv
+write.csv(BET_BB_catage_Juv_Adu, "BET_BB_catage_Juv_Adu.csv", row.names = FALSE)
+
+# Juvenile and adults total catch by year PERCENTAGE calculation
+BET_BB_catage_JA_perc <- data.frame(
+  Year = BET_BB_catage_Juv_Adu$Year,
+  Juv_Catch = (BET_BB_catage_Juv_Adu$Juv_Catch/ rowSums(BET_BB_catage_Juv_Adu[, c("Juv_Catch", "Adu_Catch")])) * 100,
+  Adu_Catch = (BET_BB_catage_Juv_Adu$Adu_Catch / rowSums(BET_BB_catage_Juv_Adu[, c("Juv_Catch", "Adu_Catch")])) * 100
+)
+
+# Save the dataset as .csv
+write.csv(BET_BB_catage_JA_perc, "BET_BB_catage_JA_perc.csv", row.names = FALSE)
+
+################################   LONGLINE  ######
 
 
-#######################################################    SWORDFISH   ####################################################
 
-SA_SWO=SS_output(dir.SWO, covar=FALSE)  # Esto lee todo el output del assessment del "Report.soo".
-
-# Biomasss
-Biomass_SWO <- SA_SWO$timeseries
-write.csv(Biomass_SWO, 'Biomass_SWO.csv')
-
-# Biomass at age
-Biomass_at_age <- SA_SWO$batage # Biomass At Age: Esto son las matrices que hemos comentado: Tenemos Area (de 1 a 4), 
-# Bio_Pattern, Sex, BirthSeas, Settlement, Platoon, Morph (ni caso, siempre 1)
-# Yr (de 191 a 420 para el BET, son indices de quarter_year, 193 corresponde a 1975 y 381 a 2022). 
-# Seas (siempre 1), Beg/Mid, esto se refiere al valor medio de ese quarter o al inicio (muy parecidos, elige uno),
-# Era: Se refiere a la inicialización, no hagas caso.
-# clases de edad de 0 a 40 (BET), son cuartos, es decir, la edad máxima de biomasa explotada son 10 años. 
-write.csv(Biomass_at_age, 'SWO_biomass_at_age.csv')
-
-Catch_at_age <- SA_SWO$catage # Esto son capturas por area, flota, sexo, tipo... La matriz es muy parecida a la anterior, te interesan el area, la flota, el año y el resto
-# las edades de 0 a 40.
-write.csv(Catch_at_age, 'SWO_catch_at_age.csv')
-
-SA_SWO$definitions # Esto permite ver a que corresponde cada flota. En las evaluaciones no importa el país, sino el arte, que es el que describe la interacción
-# con cada clase de talla
-
-SS_plots(SA_SWO) # La función SS_plots hace automaticamente casi todas las figuras de la libreria con los datos.
-
-
-
-
-#######################################################    ALBACORE   ####################################################
-
-SA_ALB=SS_output(dir.ALB, covar=FALSE)  # Esto lee todo el output del assessment del "Report.soo".
-
-# Biomasss
-Biomass_ALB <- SA_ALB$timeseries
-write.csv(Biomass_ALB, 'Biomass_ALB.csv')
-
-# Biomass at age
-Biomass_at_age <- SA_ALB$batage # Biomass At Age: Esto son las matrices que hemos comentado: Tenemos Area (de 1 a 4), 
-# Bio_Pattern, Sex, BirthSeas, Settlement, Platoon, Morph (ni caso, siempre 1)
-# Yr (de 191 a 420 para el BET, son indices de quarter_year, 193 corresponde a 1975 y 381 a 2022). 
-# Seas (siempre 1), Beg/Mid, esto se refiere al valor medio de ese quarter o al inicio (muy parecidos, elige uno),
-# Era: Se refiere a la inicialización, no hagas caso.
-# clases de edad de 0 a 40 (BET), son cuartos, es decir, la edad máxima de biomasa explotada son 10 años. 
-write.csv(Biomass_at_age, 'ALB_biomass_at_age.csv')
-
-Catch_at_age <- SA_ALB$catage # Esto son capturas por area, flota, sexo, tipo... La matriz es muy parecida a la anterior, te interesan el area, la flota, el año y el resto
-# las edades de 0 a 40.
-write.csv(Catch_at_age, 'ALB_catch_at_age.csv')
-
-SA_ALB$definitions # Esto permite ver a que corresponde cada flota. En las evaluaciones no importa el país, sino el arte, que es el que describe la interacción
-# con cada clase de talla
-
-SS_plots(SA_ALB) # La función SS_plots hace automaticamente casi todas las figuras de la libreria con los datos.
-
-
-
-
-#######################################################    Blue Shark   ####################################################
-
-SA_BSH=SS_output(dir.BSH, covar=FALSE)  # Esto lee todo el output del assessment del "Report.soo".
-
-# Biomasss
-Biomass_BSH <- SA_BSH$timeseries
-write.csv(Biomass_BSH, 'Biomass_BSH.csv')
-
-# Biomass at age
-Biomass_at_age <- SA_BSH$batage # Biomass At Age: Esto son las matrices que hemos comentado: Tenemos Area (de 1 a 4), 
-# Bio_Pattern, Sex, BirthSeas, Settlement, Platoon, Morph (ni caso, siempre 1)
-# Yr (de 191 a 420 para el BET, son indices de quarter_year, 193 corresponde a 1975 y 381 a 2022). 
-# Seas (siempre 1), Beg/Mid, esto se refiere al valor medio de ese quarter o al inicio (muy parecidos, elige uno),
-# Era: Se refiere a la inicialización, no hagas caso.
-# clases de edad de 0 a 40 (BET), son cuartos, es decir, la edad máxima de biomasa explotada son 10 años. 
-write.csv(Biomass_at_age, 'BSH_biomass_at_age.csv')
-
-Catch_at_age <- SA_BSH$catage # Esto son capturas por area, flota, sexo, tipo... La matriz es muy parecida a la anterior, te interesan el area, la flota, el año y el resto
-# las edades de 0 a 40.
-write.csv(Catch_at_age, 'BSH_catch_at_age.csv')
-
-SA_BSH$definitions # Esto permite ver a que corresponde cada flota. En las evaluaciones no importa el país, sino el arte, que es el que describe la interacción
-# con cada clase de talla
-
-SS_plots(SA_BSH) # La función SS_plots hace automaticamente casi todas las figuras de la libreria con los datos.
 
