@@ -32,9 +32,11 @@ x=which(SA_BET$parameters$Label=="Mat50%_Fem_GP_1")
 size50Mat=SA_BET$parameters[x,"Value"]                 # This is the size at 50% maturity. Now we pass it to age class.
 age_length=SA_BET$endgrowth[,c("Age_Beg", "Len_Mid")]  # Here we can see that the fish of sizes =>110 are fish older than 16 quarters (4 years).
 Catch_at_age <- SA_BET$catage # This are the cathces of bigeye by fleet and age (from 0 to 40)
+Weight_at_age <- SA_BET$watage # This are the weights of bigeye by age (from 0 to 40)
 
-# Save the dataset as a .csv
-write.csv(Catch_at_age, 'BET_catch_at_age.csv')
+# Save the datasets as a .csv
+write.csv(Catch_at_age, 'BET_catch_at_age.csv') # The units of this matrix are the nº of individuals (x1000) by age
+write.csv(Weight_at_age, 'BET_watage.csv') # The units of this matrix are the mean weight at each age and each year in kg
 SA_BET$definitions # This allows us to check the gear that each fleet corresponds. In this case the flag is not important, 
                    # as it is only the gear used what describes the interaction of the fishery with each size class
 SS_plots(SA_BET)   # This function automatically makes almost all figures of the outputs in an internet explorer page. 
@@ -49,9 +51,11 @@ x=which(SA_YFT$parameters$Label=="Mat50%_Fem_GP_1")
 size50Mat=SA_YFT$parameters[x,"Value"]                 # This is the size at 50% maturity. Now we pass it to age class.
 age_length=SA_YFT$endgrowth[,c("Age_Beg", "Len_Mid")]  # Here we can see that the fish of sizes =>75 are fish older than 9 quarters (2.25 years)
 Catch_at_age <- SA_YFT$catage # This are the cathces of yellowfin by fleet and age (from 0 to 28)
+Weight_at_age <- SA_YFT$watage # This are the weights of yellowfin by age (from 0 to 28)
 
 # Save the dataset as a .csv
-write.csv(Catch_at_age, 'YFT_catch_at_age.csv')
+write.csv(Catch_at_age, 'YFT_catch_at_age.csv') # The units of this matrix are the nº of individuals (x1000) by age
+write.csv(Weight_at_age, 'YFT_watage.csv') # The units of this matrix are the mean weight at each age and each year in kg
 SA_YFT$definitions # This allows us to check the gear that each fleet corresponds. In this case the flag is not important, 
                    # as it is only the gear used what describes the interaction of the fishery with each size class
 SS_plots(SA_YFT)   # This function automatically makes almost all figures of the outputs in an internet explorer page.
@@ -67,9 +71,11 @@ x=which(SA_SKJ$parameters$Label=="Mat50%_Fem_GP_1")
 size50Mat=SA_SKJ$parameters[x,"Value"]                 # This is the size at 50% maturity. Now we pass it to age class.
 age_length=SA_SKJ$endgrowth[,c("Age_Beg", "Len_Mid")]  # Here we can see that the fish of sizes =>38 are fish older than 3 quarters (0.75 years)
 Catch_at_age <- SA_SKJ$catage # This are the cathces of skipjack by fleet and age (from 0 to 8)
+Weight_at_age <- SA_SKJ$watage # This are the weights of yellowfin by age (from 0 to 8)
 
 # Save the dataset as a .csv
-write.csv(Catch_at_age, 'SKJ_catch_at_age.csv')
+write.csv(Catch_at_age, 'SKJ_catch_at_age.csv') # The units of this matrix are the nº of individuals (x1000) by age
+write.csv(Weight_at_age, 'SKJ_watage.csv') # The units of this matrix are the mean weight at each age and each year in kg
 SA_SKJ$definitions # This allows us to check the gear that each fleet corresponds. In this case the flag is not important, 
                    # as it is only the gear used what describes the interaction of the fishery with each size class
 SS_plots(SA_SKJ)   # This function automatically makes almost all figures of the outputs in an internet explorer page.
@@ -126,6 +132,44 @@ write.csv(catage2, 'BET_catch_at_age_by_gear.csv')
 # convert Yr column to a character column
 class(catage2$Yr)
 catage2$Yr <- as.numeric(catage2$Yr)
+
+# Read the weight at age matrix (units: kg)
+watage <- read.csv('BET_watage.csv', sep=',')
+
+# As We are interested in only the sizes, we want to transform all the first row of sizes into a column 
+head(watage)
+str(watage)
+summary(watage)
+watage[c(1,2,3,4,5,6,7)] <- NULL # dalate the first 7 columns which doesn't interest us
+
+# DElate all the rows unless the first one and then divide by 1000 to convert from kg to tons
+watage <- watage[1, , drop = FALSE]
+watage <- watage/1000
+
+# Transpose the matrix to obtain the matrix in columns
+watage_col <- t(watage)
+colnames(watage_col)[1] <- "watage"
+
+# Open the file previously created of the catches by age and gear
+catage2 <- read.csv('BET_catch_at_age_by_gear.csv', sep=',')
+
+# Multiply the values x1000 to obtain the number of individualss
+catage3 <- catage2[,c(4:44)]*1000
+
+# Multiply each value of the watage matrix by each column corresponding to the value of catage 2
+catage2 <- cbind(catage2[,c(1:3)], catage3)
+
+# Convert the matrix to a data.frame to be able to do a loop
+watage_col <- as.data.frame(watage_col)
+
+# Iterate over the value of the column 'watage'
+for (i in 1:41) {
+  # Multiply each value of 'watage' by the corresponding column of 'catage2'
+  catage2[, i + 3] <- catage2[, i + 3] * watage_col$watage[i]
+}
+
+# Save the dataset as .csv
+write.csv(catage2, 'BET_catches_in_tonnes_x_gear_and_age.csv')
 ################################
 
 ################################   BAITBOAT  ######
@@ -136,7 +180,7 @@ catage3BB <- aggregate(. ~ Fleet + Yr, data=catage2BB, sum)
 Year <- expand_grid(Year = seq(1975, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3BB <- cbind(Year, catage2BB)
-catage3BB[,c(2,3)] <- NULL
+catage3BB[,c(2,3,4)] <- NULL
 BET_BB_catage <- aggregate(. ~ Year, data=catage3BB, mean)
 
 # Save the dataset as .csv
@@ -169,7 +213,7 @@ catage3LL <- aggregate(. ~ Fleet + Yr, data=catage2LL, sum)
 Year <- expand_grid(Year = seq(1975, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3LL <- cbind(Year, catage3LL)
-catage3LL[,c(2,3)] <- NULL
+catage3LL[,c(2,3,4)] <- NULL
 BET_LL_catage <- aggregate(. ~ Year, data=catage3LL, mean)
 
 # Save the dataset as .csv
@@ -202,7 +246,7 @@ catage3PSFS <- aggregate(. ~ Fleet + Yr, data=catage2PSFS, sum)
 Year <- expand_grid(Year = seq(1975, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3PSFS <- cbind(Year, catage3PSFS)
-catage3PSFS[,c(2,3)] <- NULL
+catage3PSFS[,c(2,3,4)] <- NULL
 BET_PSFS_catage <- aggregate(. ~ Year, data=catage3PSFS, mean)
 
 # Save the dataset as .csv
@@ -237,7 +281,7 @@ catage3oth <- aggregate(. ~ Fleet + Yr, data=catage2oth, sum)
 Year <- expand_grid(Year = seq(1975, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3oth <- cbind(Year, catage3oth)
-catage3oth[,c(2,3)] <- NULL
+catage3oth[,c(2,3,4)] <- NULL
 BET_oth_catage <- aggregate(. ~ Year, data=catage3oth, mean)
 
 # Save the dataset as .csv
@@ -272,7 +316,7 @@ catage3PSLS <- aggregate(. ~ Fleet + Yr, data=catage2PSLS, sum)
 Year <- expand_grid(Year = seq(1975, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3PSLS <- cbind(Year, catage3PSLS)
-catage3PSLS[,c(2,3)] <- NULL
+catage3PSLS[,c(2,3,4)] <- NULL
 BET_PSLS_catage <- aggregate(. ~ Year, data=catage3PSLS, mean)
 
 # Save the dataset as .csv
@@ -307,7 +351,7 @@ catage3LI <- aggregate(. ~ Fleet + Yr, data=catage2LI, sum)
 Year <- expand_grid(Year = seq(1975, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3LI <- cbind(Year, catage3LI)
-catage3LI[,c(2,3)] <- NULL
+catage3LI[,c(2,3,4)] <- NULL
 BET_LI_catage <- aggregate(. ~ Year, data=catage3LI, mean)
 
 # Save the dataset as .csv
