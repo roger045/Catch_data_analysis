@@ -212,7 +212,7 @@ catch1[14] <-NULL
 # Rename the datset so we don't mess it 
 dataset_all<-catch1
 dataset_all_20<- dataset_all %>% filter(Year >= '2000') # filter the yers of our interest
-
+####################################################
 
 ######## Objective: calculate the SPECIFICITY ###### 
 # The specificicty represents the proportion of all the catches of that fleet that have been made inside the model area for all the years
@@ -232,9 +232,9 @@ step2fl2 <- step2fl %>% filter (Ecoregion_name =="Model_area")
 step2fl2 <- slice(step2fl2, -84)
 unique(step2fl2$Fleet)
 specificity_method='sum'
-###########################################################################################################################
+################################################
 
-######## Objective: calculate the FIDELITY######
+######## Objective: calculate the FIDELITY ######
 # Which is for all the cells that the Model_Area ecoregion has, in how many of this cells each fleet has fished. 
 names(dataset_all_20)
 TcatchEcoLongLat<-ddply(dataset_all_20, .(Ecoregion_name,Latitude,Longitude), function(x) Tcatch = sum(x$MT,na.rm=T)) # Here we calculate how much of catches have been 
@@ -267,12 +267,234 @@ data_model_area_fidel <- slice(data_model_area_fidel, -84)
 
 # The fidelity dataframe showing for each fleet (flag + gear) how many of the cells of the model area have catches in it. 
 view(data_model_area_fidel)
-                            
+####################################################  
+                                 
+######## Objective: calculate the SFindicator #####
+head(step2fl)
+head(fidelity_prep)
+                                 
+#Order the dataframe by ecoregion and name
+step2fl_ordered<-step2fl[order(step2fl$Ecoregion_name,step2fl$Fleet),]
+head(step2fl_ordered)
+dim(step2fl_ordered)
 
+#Order the dataframe by ecoregion and name
+fidelity_prep_ordered<-fidelity_prep[order(fidelity_prep$Ecoregion_name,fidelity_prep$Fleet),]
+head(fidelity_prep_ordered)
+dim(fidelity_prep_ordered)
 
+# Merge the two dataframes
+FinalDF<-cbind(step2fl_ordered,fidelity_prep_ordered)
+head(FinalDF)
 
+# Select only the columns with interest for us: Ecoregion, Fleet, Specificity, Fidelity
+FinalDF2<- FinalDF[,c(1,2,5,11)] #Check which column is Fidelity
+head(FinalDF2)
 
+# Calculate the inidcator: SFindicator=specificity*fidelity*100
+FinalDF2$SFIndicator<-FinalDF2$Specificity*FinalDF2$Fidelity*100
+head(FinalDF2)
 
+#Subset only the registers in the model area
+FinalDF2_model_area<- FinalDF2 %>% filter (Ecoregion_name =="Model_area")
+
+# Delate line 84 as it contain an error, as the PS_EGY fleet has registers in the model area, with Num, but 0 in the MT column. 
+FinalDF2_model_area <- slice(FinalDF2_model_area, -84)
+
+# Save the indicators in a .csv
+write.csv(FinalDF2_model_area,"Model_area_indicators.csv")
+####################################################
+                                 
+######## Objective: calculate total catch in all the Indian ocean by each fleet #####
+datosfl <- catch1 
+unique(datosfl$Fleet)
+detach("package:plyr", unload=TRUE) # might give an error. It's not a problem.
+
+# Summarize how many catches each fleet made in total each year
+df_yc <- datosfl %>% group_by(Fleet,Year)%>%summarize(tCatch=sum(MT))
+unique(df_yc$Fleet)
+                                 
+# Subset only the registers from 2000 onwards
+df_yc2 <- df_yc %>% filter(Year >= "2000")
+names(df_yc2)
+unique(df_yc2$Fleet)
+
+# Calculate for each fleet the total of catches between 2000 and 2022. 
+df_yc3 <- df_yc2 %>% summarize(tCatch=sum(tCatch))
+names(df_yc3)
+unique(df_yc3$Fleet)
+
+# Remove PS_EGY as they do not have catches
+Model_area_fleets <- Model_area_fleets[-15]
+names(Model_area_fleets)<-c("Fleet")
+
+# Subset the fleets that fish in the model area, so we have the total catch per fleet
+Model_area_fleets_total_catch <- subset(df_yc3, Fleet %in% Model_area_fleets)
+unique(Model_area_fleets_total_catch$Fleet)
+names(Model_area_fleets_total_catch)
+head(Model_area_fleets_total_catch)
+####################################################
+
+######## Objective: calculate total catch in the model area by each fleet ######
+datosfl <- catch1
+
+# Here we select to only make the math for the fleets that fish in the model area
+datosfl_model_area_fleets <- subset(datosfl, Fleet %in% Model_area_fleets)
+
+# We sumarize the catches by ecoregion, fleet and year, and then we filter it by the year and the ecoregion==model area, so we obtain the total catches in the model area 
+datosfl_model_area_fleets_tca <- datosfl_model_area_fleets %>% group_by(Ecoregion_name,Fleet,Year) %>% summarize(tCatch=sum(MT))
+datosfl_model_area_fleets_tca_2000 <- datosfl_model_area_fleets_tca %>% filter(Year >= "2000" )
+datosfl_model_area_fleets_tca_2000_MA<-datosfl_model_area_fleets_tca_2000 %>% filter(Ecoregion_name=="Model_area")
+datosfl_model_area_fleets_sumTC <- datosfl_model_area_fleets_tca_2000_MA %>% summarize(tCatch_ModelArea =sum(tCatch))
+head(datosfl_model_area_fleets_sumTC)
+####################################################
+
+#####Percentage of catch within the model area#####
+
+head(datosfl_model_area_fleets_sumTC)
+head(Model_area_fleets_total_catch)
+unique(datosfl_model_area_fleets_sumTC)
+unique(Model_area_fleets_total_catch)
+
+# Here we bind the two datasets, only pasting the second column for the second dataset
+df_tc_fleets_model_area<-cbind(datosfl_model_area_fleets_sumTC,Model_area_fleets_total_catch[,c(2)])
+head(df_tc_fleets_model_area)
+
+# Here we multiply we calculate the % of catch inside the model area = (catch inside the model area/ total catch) *100
+df_tc_fleets_model_area$tcatch_within_model_area<-((df_tc_fleets_model_area$tCatch_ModelArea/df_tc_fleets_model_area$tCatch)*100)
+
+# Save the dtaset as a .csv
+write.csv(df_tc_fleets_model_area,"tCatch_model_area_sum.csv")
+####################################################
+
+######## Objective: What is the area that they fish the most and on which species for each fleet ##### 
+
+#### In all ecoregions
+datosfl <- catch1
+
+# We select the dataset with only the data for the fleets that fish in the model area
+datosfl_MA_fleets <- datosfl %>% filter(Fleet %in% Model_area_fleets)
+
+# Then we subset the data so we know how many catches of each species in each ecoregion, by which fleet in which year 
+datosfl_MA_fleets_tca_sp <- datosfl_MA_fleets %>% group_by(Species,Ecoregion_name,Fleet,Year)  %>%summarize(tCatch=sum(MT)) 
+
+# Subset by the year
+datosfl_MA_fleets_tca_2000_sp <- datosfl_MA_fleets_tca_sp %>% filter(Year >= "2000" )
+
+head(datosfl_MA_fleets_tca_2000_sp)#
+
+# Then we subset so we know for each fleet which is the species with most catches, and in which ecoregion
+datosfl_MA_fleets_meanTC <- datosfl_MA_fleets_tca_2000_sp %>% group_by(Fleet,Ecoregion_name,Species)%>% summarize(meanCatch_sp =(mean(tCatch)))%>%
+  group_by(Fleet) %>%
+  top_n(1, wt = meanCatch_sp)
+head(datosfl_MA_fleets_meanTC)
+View(datosfl_MA_fleets_meanTC)
+
+# Save the dataset as a .csv
+write.csv(datosfl_MA_fleets_meanTC,"Most_catched_sp_per_fleet_all_Ecoregions.csv")
+####################################################
+
+##### Objective: What is the species most cught in the model area by each fleet #####
+datosfl_MA_fleets_tca_2000_sp_MA<-datosfl_MA_fleets_tca_2000_sp %>% filter(Ecoregion_name=="Model_area")
+
+head(datosfl_MA_fleets_tca_2000_sp_MA)#
+
+datosfl_MA_fleets_meanTC_MA <- datosfl_MA_fleets_tca_2000_sp_MA %>% group_by(Fleet,Species)%>% summarize(meanCatch_sp =(mean(tCatch)))%>%
+  group_by(Fleet) %>%
+  top_n(1, wt = meanCatch_sp)
+head(datosfl_MA_fleets_meanTC_MA)
+View(datosfl_MA_fleets_meanTC_MA)
+
+# Save the dataset as a .csv
+write.csv(datosfl_MA_fleets_meanTC_MA,"Most_catched_sp_per_fleet_model_area.csv")     
+####################################################
+
+##### Objective: What is the species most cught outside the model area by each fleet #####
+datosfl_MA_fleets_tca_2000_sp_NOMA<-datosfl_MA_fleets_tca_2000_sp %>% filter(!Ecoregion_name=="Model_area")
+head(datosfl_MA_fleets_tca_2000_sp_NOMA)#
+datosfl_MA_fleets_meanTC_NOMA <- datosfl_MA_fleets_tca_2000_sp_NOMA %>% group_by(Fleet,Species)%>% summarize(meanCatch_sp =(mean(tCatch)))%>%
+  group_by(Fleet) %>%
+  top_n(1, wt = meanCatch_sp)
+
+head(datosfl_MA_fleets_meanTC_NOMA)
+View(datosfl_MA_fleets_meanTC_NOMA)
+                                 
+# Save the dataset as a .csv
+write.csv(datosfl_MA_fleets_meanTC_NOMA ,"Most_catched_sp_per_fleet_No_model_area.csv")
+####################################################
+                                 
+######## Objective: Calculate the % of pixels = for the total of points where the fleet fishes, how many are from the model area #####
+library(plyr)
+                                 
+# First we calculate the sum of the catches for each fleet in each point (Lat, Long) with catches registered
+TcatchEcoLatitudeLongitude2<-ddply(dataset_all_20, .(Fleet, Latitude, Longitude), function(x) Tcatch = sum(x$MT,na.rm=T))
+summary(TcatchEcoLatitudeLongitude2)
+
+# Then we calculate the number of points in which our fleet is fishing
+Number_of_cells_Eco2<-ddply(TcatchEcoLatitudeLongitude2, .(Fleet),summarize, count = length(Fleet))
+
+# We calculate for each fleet how many points of catches have in each ecoregion
+Number_of_cells_Eco_fleet2<-ddply(dataset_all_20, .(Ecoregion_name, Fleet), function(x) count = dim(unique(x[,c('Latitude','Longitude')]))[1])
+head(Number_of_cells_Eco_fleet)
+
+# Then we merge the two datasets by fleet
+fidelity_prep2<-merge(Number_of_cells_Eco2,Number_of_cells_Eco_fleet2,by.x="Fleet",by.y="Fleet")
+head(fidelity_prep2)
+
+# Change the names of the columns
+names(fidelity_prep2)<-c("Fleet","Number_of_cells_Eco","Ecoregion","Number_of_cells_Eco_fleet")
+
+# Here we calculate the % of pixels = for the total of points where the fleet fishes, how many are from the model area
+fidelity_prep2$Percentage<-(fidelity_prep2$Number_of_cells_Eco_fleet/fidelity_prep2$Number_of_cells_Eco*100)
+
+summary(fidelity_prep2)
+
+levels(as.factor(fidelity_prep2$Fleet))
+fidelity_prep2$Fleet<-as.factor(fidelity_prep2$Fleet)
+
+Percentage_pixels_MA <- fidelity_prep2 %>% filter(Ecoregion == "Model_area")
+
+Percentage_pixels_MA<-subset(Percentage_pixels_MA, select = c(1,5))
+
+# Delate line 84 as it contain an error, as the PS_EGY fleet has registers in the model area, with Num, but 0 in the MT column. 
+Percentage_pixels_MA <- slice(Percentage_pixels_MA, -84)
+                                  
+# Save the dataset as a .csv        
+write.csv(Percentage_pixels_MA,"Percentage_pixels_MA.csv")
+####################################################
+                                  
+##### Objective: merge all the datasets generated together #####
+FinalDF2_model_area
+
+# Merge the first two data frames
+merged_df <- merge(FinalDF2_model_area, Model_area_fleets_total_catch, by = "Fleet") 
+
+# Merge the next data frame
+merged_df <- merge(merged_df, datosfl_model_area_fleets_sumTC, by = "Fleet")
+
+# Merge df_tc_fleets_MA
+merged_df <- merge(merged_df, df_tc_fleets_model_area, by = "Fleet")
+
+# Merge Percentage_pixels_MA
+merged_df <- merge(merged_df, Percentage_pixels_MA, by = "Fleet")
+
+# Merge datosfl_all_Ecor_fleets_meanTC
+merged_df <- merge(merged_df, datosfl_MA_fleets_meanTC, by = "Fleet") # Will give a warning(). It's not a problem
+
+# Merge datosfl_NOMA_fleets_meanTC
+merged_df <- merge(merged_df, datosfl_MA_fleets_meanTC_NOMA, by = "Fleet", all = TRUE) # Will give a warning(). It's not a problem
+
+# Merge datosfl_MA_fleets_meanTC
+merged_df <- merge(merged_df, datosfl_MA_fleets_meanTC_MA, by = "Fleet", all = TRUE) # Will give a warning(). It's not a problem
+
+Excel_Active_fleets<- subset(merged_df,select=c(1,3,4,5,6,8,12,13,14,15,16,19,20)) # Select only the columns that interests us
+                                  
+# Rename the columns and save it to a .csv
+names(Excel_Active_fleets) <- c("Fleet", "Specificity", "Fidelity", "SFindicator", "tCatch", "tCatch_MA",
+                                "tCatch_MA(%)", "% of Pixels in the MA", "Ecoregion with most catches by the fleet",
+                                "Most caught species", "meanCatch", "Most caught species in the MA", "meanCatch")
+write.csv(Excel_Active_fleets,"Excel_Active_fleets.csv")
+################################################################################################################################################
 
 
                                ################ EXPLORATORY TABLES #################
