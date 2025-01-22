@@ -142,7 +142,7 @@ str(watage)
 summary(watage)
 watage[c(1,2,3,4,5,6,7)] <- NULL # dalate the first 7 columns which doesn't interest us
 
-# DElate all the rows unless the first one and then divide by 1000 to convert from kg to tons
+# Delate all the rows unless the first one and then divide by 1000 to convert from kg to tons
 watage <- watage[1, , drop = FALSE]
 watage <- watage/1000
 
@@ -479,6 +479,43 @@ write.csv(catage2, 'YFT_catch_at_age_by_gear.csv')
 # Convert Yr column to a character column
 class(catage2$Yr)
 catage2$Yr <- as.numeric(catage2$Yr)
+
+# Read the weight at age matrix (units: kg)
+watage <- read.csv('YFT_watage.csv', sep=',')
+
+# As We are interested in only the sizes, we want to transform all the first row of sizes into a column 
+head(watage)
+str(watage)
+summary(watage)
+watage[c(1,2,3,4,5,6,7)] <- NULL # Delete the first 7 columns which don't interest us
+
+# Delete all the rows unless the first one and then divide by 1000 to convert from kg to tons
+watage <- watage[1, , drop = FALSE]
+watage <- watage/1000
+
+# Transpose the matrix to obtain the matrix in columns 
+watage_col <- t(watage)
+colnames(watage_col)[1] <- "watage"
+
+# Open the previously created file of the catches by age and gear
+catage2 <- read.csv('YFT_catch_at_age_by_gear.csv', sep=',')
+
+# Multiply the values x1000 to obtain the number of individuals
+catage3 <- catage2[,c(4:32)]*1000
+# Multiply each value of the watage matrix by each column corresponding to the value of catage 2
+catage2 <- cbind(catage2[,c(1:3)], catage3)
+
+# Convert the matrix to a data.frame to be able to do a loop
+watage_col <- as.data.frame(watage_col)
+
+# Iterate over the value of the column 'watage'
+for (i in 1:29) {
+  # Multiply each value of 'watage' by the corresponding column of 'catage2'
+  catage2[, i + 3] <- catage2[, i + 3] * watage_col$watage[i]
+}
+
+# Save the dataset as .csv
+write.csv(catage2, 'YFT_catches_in_tonnes_x_gear_and_age.csv')
 ################################
 
 ################################   GILLNET  #####
@@ -489,7 +526,7 @@ catage2GN <- aggregate(. ~ Fleet + Yr, data=catage2GN, sum)
 Year <- expand_grid(Year = seq(1950, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3GN <- cbind(Year, catage2GN)
-catage3GN[,c(2,3)] <- NULL
+catage3GN[,c(2,3,4)] <- NULL
 YFT_GN_catage <- aggregate(. ~ Year, data=catage3GN, mean)
 
 # Save the dataset as .csv
@@ -523,7 +560,7 @@ catage2LI <- aggregate(. ~ Fleet + Yr, data=catage2LI, sum)
 Year <- expand_grid(Year = seq(1950, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3LI <- cbind(Year, catage2LI)
-catage3LI[,c(2,3)] <- NULL
+catage3LI[,c(2,3,4)] <- NULL
 YFT_LI_catage <- aggregate(. ~ Year, data=catage3LI, mean)
 
 # Save the dataset as .csv
@@ -558,7 +595,7 @@ catage2LL <- aggregate(. ~ Fleet + Yr, data=catage2LL, sum)
 Year <- expand_grid(Year = seq(1950, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3LL <- cbind(Year, catage2LL)
-catage3LL[,c(2,3)] <- NULL
+catage3LL[,c(2,3,4)] <- NULL
 YFT_LL_catage <- aggregate(. ~ Year, data=catage3LL, mean)
 
 # Save the dataset as .csv
@@ -592,7 +629,7 @@ catage2oth <- aggregate(. ~ Fleet + Yr, data=catage2oth, sum)
 Year <- expand_grid(Year = seq(1950, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3oth <- cbind(Year, catage2oth)
-catage3oth[,c(2,3)] <- NULL
+catage3oth[,c(2,3,4)] <- NULL
 YFT_oth_catage <- aggregate(. ~ Year, data=catage3oth, mean)
 
 # Save the dataset as .csv
@@ -626,7 +663,7 @@ catage2BB <- aggregate(. ~ Fleet + Yr, data=catage2BB, sum)
 Year <- expand_grid(Year = seq(1950, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3BB <- cbind(Year, catage2BB)
-catage3BB[,c(2,3)] <- NULL
+catage3BB[,c(2,3,4)] <- NULL
 YFT_BB_catage <- aggregate(. ~ Year, data=catage3BB, mean)
 
 # Save the dataset as .csv
@@ -660,7 +697,7 @@ catage2PSFS <- aggregate(. ~ Fleet + Yr, data=catage2PSFS, sum)
 Year <- expand_grid(Year = seq(1950, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3PSFS <- cbind(Year, catage2PSFS)
-catage3PSFS[,c(2,3)] <- NULL
+catage3PSFS[,c(2,3,4)] <- NULL
 YFT_PSFS_catage <- aggregate(. ~ Year, data=catage3PSFS, mean)
 
 # Save the dataset as .csv
@@ -694,7 +731,7 @@ catage2PSLS <- aggregate(. ~ Fleet + Yr, data=catage2PSLS, sum)
 Year <- expand_grid(Year = seq(1950, 2022), Repetition = 1:4)
 Year[,2] <- NULL
 catage3PSLS <- cbind(Year, catage2PSLS)
-catage3PSLS[,c(2,3)] <- NULL
+catage3PSLS[,c(2,3,4)] <- NULL
 YFT_PSLS_catage <- aggregate(. ~ Year, data=catage3PSLS, mean)
 
 # Save the dataset as .csv
@@ -805,6 +842,44 @@ write.csv(catage2, 'SKJ_catch_at_age_by_gear.csv')
 # convert Yr column to a character column
 class(catage2$Yr)
 catage2$Yr <- as.numeric(catage2$Yr)
+
+# Read the weight at age matrix (units: kg)
+watage <- read.csv('SKJ_watage.csv', sep=',')
+
+# As We are interested in only the sizes, we want to transform all the first row of sizes into a column 
+head(watage)
+str(watage)
+summary(watage)
+watage[c(1,2,3,4,5,6,7)] <- NULL # Delete the first 7 columns which don't interest us
+
+# Delete all the rows unless the first one and then divide by 1000 to convert from kg to tons
+watage <- watage[1, , drop = FALSE]
+watage <- watage/1000
+
+# Transpose the matrix to obtain the matrix in columns
+watage_col <- t(watage)
+colnames(watage_col)[1] <- "watage"
+
+# Open the previously created file of the catches by age and gear
+catage2 <- read.csv('SKJ_catch_at_age_by_gear.csv', sep=',')
+
+# Multiply the values x1000 to obtain the number of individuals
+catage3 <- catage2[,c(4:12)]*1000
+
+# Multiply each value of the watage matrix by each column corresponding to the value of catage 2
+catage2 <- cbind(catage2[,c(1:3)], catage3)
+
+# Convert the matrix to a data.frame to be able to do a loop
+watage_col <- as.data.frame(watage_col)
+
+# Iterate over the value of the column 'watage'
+for (i in 1:9) {
+  # Multiply each value of 'watage' by the corresponding column of 'catage2'
+  catage2[, i + 3] <- catage2[, i + 3] * watage_col$watage[i]
+}
+
+# Save the dataset as .csv
+write.csv(catage2, 'SKJ_catches_in_tonnes_x_gear_and_age.csv')
 ################################
 
 ################################   LONGLINE  #####
