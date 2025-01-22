@@ -1,45 +1,36 @@
-# -------------------------------------------------------------------------------------------
-# Código para leer output de SS3 - Indian Ocena bigeye (BET), yellowfin (YFT) y skipjack (SKJ)
-# --------------------------------------------------------------------------------------------
+################################################################################
+###### Script to read the outputs of the different stock assessments      ######
+###### (SS3 model) and calculate from the outputs, how many juevniles     ######
+######  and adults each fleet is fishing                                  ######
+###### Species: BET, YFT and SKJ                                          ######
+###### Author: Roger Amate (AZTI)                                         ######
+###### year: 2023                                                         ######
+################################################################################
 #install.packages("zoo")
 #install.packages("r4ss") # 
 #remotes::install_github("r4ss/r4ss")
 library(r4ss)
+library(zoo)
 library(tidyr)
 library(dplyr)
-library(zoo)
+library(ggplot2)
+library(readr)
+library(hrbrthemes)
+library(scales)
 
-dir.BET="~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/4. Stock Assessment (2023)/8. Lectura de fichers/latest_SA_files/BET/io_h80_Gbase_MHamel17_sD/"
-dir.YFT="~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/4. Stock Assessment (2023)/8. Lectura de fichers/latest_SA_files/YFT/io_h80_q1_Gbase_Mbase_tlambda01/"
-dir.SKJ="~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/4. Stock Assessment (2023)/8. Lectura de fichers/latest_SA_files/SKJ/io_h80_Ua_q0_L70/"
-dir.SWO="~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/7. Stock_assessment/2. Datasets with separation x areas of the SA/5. SWO/SWO/basic"
-dir.ALB="~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/7. Stock_assessment/2. Datasets with separation x areas of the SA/4. ALB/ALB/Run101_CPUE_NW"
-dir.BSH="~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/7. Stock_assessment/1. Datasets with data on the model area as a unit (correct)/BSH"
+### Paste the directory where the outputs of each species are stored
+dir.BET=".../8. Lectura de fichers/latest_SA_files/BET/io_h80_Gbase_MHamel17_sD/"         # It's a example
+dir.YFT=".../8. Lectura de fichers/latest_SA_files/YFT/io_h80_q1_Gbase_Mbase_tlambda01/"  # It's a example
+dir.SKJ=".../8. Lectura de fichers/latest_SA_files/SKJ/io_h80_Ua_q0_L70/"                 # It's a example
 
 #######################################################    BIGEYE   ####################################################
-
 SA_BET=SS_output(dir.BET, covar=FALSE)  # Esto lee todo el output del assessment del "Report.soo".
 
-# Biomasss
-Biomass_BET <- SA_BET$timeseries
-write.csv(Biomass_BET, 'Biomass_BET.csv')
-
-# Biomass at age
-Biomass_at_age <- SA_BET$batage # Biomass At Age: Esto son las matrices que hemos comentado: Tenemos Area (de 1 a 4), 
-# Bio_Pattern, Sex, BirthSeas, Settlement, Platoon, Morph (ni caso, siempre 1)
-# Yr (de 191 a 420 para el BET, son indices de quarter_year, 193 corresponde a 1975 y 381 a 2022). 
-# Seas (siempre 1), Beg/Mid, esto se refiere al valor medio de ese quarter o al inicio (muy parecidos, elige uno),
-# Era: Se refiere a la inicialización, no hagas caso.
-# clases de edad de 0 a 40 (BET), son cuartos, es decir, la edad máxima de biomasa explotada son 10 años. 
-write.csv(Biomass_at_age, 'BET_biomass_at_age.csv')
-
-# Para diferenciar juveniles/adultos, solemos usar el 50% madurez. Primero obtenemos la talla del 50% de madurez de 
-# SA_BET$parameters, y luego ver a qué edad corresponde esa talla en el endgrowth. Te lo hago aqui:
-
-x=which(SA_BET$parameters$Label=="Mat50%_Fem_GP_1")
-size50Mat=SA_BET$parameters[x,"Value"]   # Esta es la talla del 50% madurez. Ahora lo pasamos a clase de edad.
-age_length=SA_BET$endgrowth[,c("Age_Beg", "Len_Mid")]  # de aquí puedes ver que los peces de talla 110 cm son peces de clase de edad superior a 16 (cuartos)
-# es decir unos 4 años.
+# To diferentiate juveniles from adults, we will use the 50% maturity. First we obtain the size at 50% maturity from
+#SA_BET_parameters, and then we check to which age that size corresponds in the endgrowth:
+x=which(SA_BET$parameters$Label=="Mat50%_Fem_GP_1")   
+size50Mat=SA_BET$parameters[x,"Value"]       # This is the size at 50% maturity. Now we pass it to age class.
+age_length=SA_BET$endgrowth[,c("Age_Beg", "Len_Mid")]  # Here we can see that the fish of sizes =>110 are fish older than 16 quarters (4 years).
 
 # Con esto entiendo que puedes obtener las matrices de biomasa x edad x año y separar juveniles y adultos.
 
