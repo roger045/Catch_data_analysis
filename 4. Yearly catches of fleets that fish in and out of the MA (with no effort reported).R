@@ -21,7 +21,7 @@ library(readr)
 library(hrbrthemes)
 
 # Set the working directory
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch data/2022_Data/csv")
+setwd("~/.../4. Rised catch data/2022_Data/csv")
 
 
 #--------------------------------Data preparation------------------------------#
@@ -198,7 +198,7 @@ write.csv(catch_OutMA4, 'Yearly_catches_of_in&out_Fleets_outside_MA.csv')
 #######################################################
 ###########################
 # Set the working directory
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/8. Nominal_catch")
+setwd("~/.../2. Workind data/8. Nominal_catch")
 
 
 #--------------------------------Data preparation------------------------------#
@@ -262,14 +262,14 @@ catch4 <- catch3[catch3$Fleet %in% flotas_interes, ]
 unique(catch4$SPECIES_CODE)
 
 # Change the working directory to where we have saved the file: Proportions_yearly_catches_in&out_fleets.csv
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch data/2022_Data/csv")
+setwd("~/.../4. Rised catch data/2022_Data/csv")
 
 # Load the yearly proportions dataset
 proportions <- read.csv('Proportions_yearly_catches_in&out_fleets.csv', sep=';', header=T, row.names=1)
 colnames(proportions) <- gsub("^X", "", colnames(proportions)) # remove the X at the begining of the names of the columns
 
 # Set the working first directory again
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/8. Nominal_catch")
+setwd("~/.../2. Workind data/8. Nominal_catch")
 
 # Multyply the data frame of catch4 and teh data frame of catch proportions inside the MA 
 # Multiply each register of a catch by a fleet and a year by the proportion of catches 
@@ -309,7 +309,7 @@ catch5 <- catch4_sub %>% aggregate(Catch_prop ~ YEAR + SPECIES_CODE + EwE_fleet,
 fleet_names <- unique(catch5$EwE_fleet)
 
 # Change the directory where we want to save the files of catches y fleet of the model and year inside the model area.
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/10. Catch_calculation_data/2. Catches_of_in&out_fleets_RC_prop")
+setwd("~/.../10. Catch_calculation_data/2. Catches_of_in&out_fleets_RC_prop")
 
 # Iterate over each model fleet and save the file as a .csv
 for (fleet in fleet_names) {
