@@ -1,10 +1,10 @@
-################################################################################
-###### Script to calculate how much PS catch in and out the model area    ######
-###### has been and how much of it was at PSFS and at PSLS                ######
-###### SKJ, YFT, BET, ALB, SWO                                            ######
-###### Author: Roger Amate (AZTI)                                         ######
-###### year: 2024                                                         ######
-################################################################################
+########################################################################################
+###### Script to calculate how much PS catch has been made inside and outside     ######
+###### of the model area by each fleet and how much of it was at PSFS and at PSLS ######
+###### Species: SKJ, YFT, BET, ALB, SWO                                           ######
+###### Author: Roger Amate (AZTI)                                                 ######
+###### year: 2024                                                                 ######
+########################################################################################
 
 #install.packages('tidyr')
 #install.packages('dplyr')
@@ -20,21 +20,20 @@ library(readr)
 library(hrbrthemes)
 
 # Set the working directory
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch data/2022_Data/csv")
-
+setwd("~/.../4. Rised catch data/2022_Data/csv")
 
 #--------------------------------Data preparation------------------------------#
 
-# read the data
+# Read the data
 catch <- read.csv('Rised_catch_5sp_catches_ecoregion_with_model_reasinged.csv', sep=',')
 catch[1] <- NULL
 head(catch)
 str(catch)
 
-# check for NA values
+# Check for NA values
 any(is.na(catch)) # With this line we check if there are empty values (NA) in the database
 
-catch$Fleet <- trimws(catch$Fleet) # Dealte the white spaces that some fleets have at the end of their acronym.
+catch$Fleet <- trimws(catch$Fleet) # Delete the white spaces that some fleets have at the end of their acronym.
 
 catch_21y <- catch%>%subset(Year >= '2000') # Subset the data for the years that we want
 
@@ -83,28 +82,24 @@ Fleets$Fleet <- paste(Fleets$Gear_code, Fleets$Fleet, sep = '_')
 # Delete the columns that are no longer needed
 Fleets[,c(2,3,7)] <-NULL 
 
-# Vector con los nombres de las flotas deseadas
+# Vector with the names of the selected fleets 
 flotas_interes = c('PS_IND', 'PS_JOR', 'PS_KEN', 'PS_LKA', 'PS_MYS', 'PS_THA', 'PSFS_BLZ', 'PSFS_IRN', 'PSFS_JPN', 'PSFS_KOR', 'PSFS_MYS',
                    'PSFS_NEIPS', 'PSFS_NEISU', 'PSFS_THA', 'PSFS_TZA', 'PSLS_BLZ', 'PSLS_IRN', 'PSLS_JPN', 'PSLS_KOR', 'PSLS_LKA', 'PSLS_MYS',
                    'PSLS_NEIPS', 'PSLS_NEISU', 'PSLS_PHL', 'PSLS_THA', 'PSLS_TZA', 'PS_IDN', 'PS_MOZ', 'PSLS_IDN', 'PSFS_EUESP', 'PSFS_SYC',
                    'PSFS_EUFRA', 'PSFS_EUITA', 'PSFS_EUMYT', 'PSFS_MUS', 'PSLS_EUESP', 'PSLS_SYC',
                    'PSLS_EUFRA', 'PSLS_EUITA', 'PSLS_EUMYT', 'PSLS_MUS')
 
-# Filtrar el data.frame
+# Filter the data.frame
 catch4 <- Fleets[Fleets$Fleet %in% flotas_interes, ]
 
 # Now we want to aggregate between inside and outside the model area
-
 # Convert the ecoregion column with new names: Model_area, Outside_MA
 catch4$Ecoregion_name <- ifelse(catch4$Ecoregion_name %in% c('Aghullas Current', 'Indian Ocean Gyre', 'Southern Ocean', 'Leeuwin Current'), 
   'Outside_MA', catch4$Ecoregion_name)
-
 catch5 <- aggregate(MT ~  Ecoregion_name +  Fleet + Year, data = catch4, sum) 
 
-# 
 # Unite the two columns of Ecoregion and Fleet into one called 'Fleet'
 catch5$Fleet_area <- paste(catch5$Fleet, catch5$Ecoregion_name, sep = '_')
-
 catch6 <- catch5
 
 # Delate the columns that we don't need anymore
@@ -123,4 +118,9 @@ setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch
 # Save the dataframe as a .csv
 write.csv(catch7, 'FS-LS_fleets_catch_separation_in_and_out_MA.csv')
 
+########## NOTE: Once we obtain the resultant data frame ("FS-LS_fleets_catch_separation_in_and_out_MA.csv") using excel
+########## we will calculate, using the catches of each fleet inside and outside the MA, the proportion of catches at FAD 
+########## and FSC for each fleet and each year inside the MA. (Reference: README)
 
+################################################################################################################################
+################################################################################################################################
