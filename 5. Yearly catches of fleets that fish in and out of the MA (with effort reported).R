@@ -190,12 +190,12 @@ head(catches_ecoregion)
 summary(catches_ecoregion)
 
 # Read and plot ecoregion poligons
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
+setwd("~/.../4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
 ecoregions_shp="Final_area_for_calculations.shp"
 ecoregion<-readOGR(dsn = ecoregions_shp, stringsAsFactors = F) # Don't worry about the warnings ()
 
 # Change the working directory to the original one
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
+setwd("~/.../1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
 
 # Plot shapefile and points of catches
 ggplot() + geom_polygon(data = ecoregion, aes(x = long, y = lat, group = group), colour = "grey", fill = NA) + geom_point(data=catches_ecoregion, aes(longitude,latitude))
@@ -299,7 +299,7 @@ write.csv(CE_LL_catches_ecoregion_reasigned, "CE_LL_catches_ecoregion_reasigned.
 
 
 # Set the Working directory
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
+setwd("~/.../1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
 
 ##################################################
 ### Purse Seine and BB
@@ -322,7 +322,7 @@ datos_PSBB[is.na(datos_PSBB)] <- 0
 # Read shapefile
 ##################################################
 
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
+setwd("~/.../4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
 
 ecoregions<-readOGR("Final_area_for_calculations.shp", layer="Final_area_for_calculations") # Don't worry about the warnings()
 class(ecoregions) # See how it is a "SpatialPolygonsDataFrame"
@@ -334,7 +334,7 @@ class(world)
 ##################################################
 # Transform fishing ground code into latitude and longitude
 ##################################################
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
+setwd("~/.../1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
 # Split grid column into: size, quadrant, latitude and longitude
 # In hemisphere: 1=N and 2=S
 datos <- datos_PSBB %>% separate(col = Grid, sep = c(1, 2, 4), 
@@ -460,12 +460,12 @@ head(catches_ecoregion)
 summary(catches_ecoregion)
 
 # Read and plot ecoregion poligons
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
+setwd("~/.../4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
 ecoregions_shp="Final_area_for_calculations.shp"
 ecoregion<-readOGR(dsn = ecoregions_shp, stringsAsFactors = F) # Don't worry about the warnings()
 
 # Set the working directory to the first one
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
+setwd("~/.../1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
 # Plot shapefile and points of catches
 ggplot() + geom_polygon(data = ecoregion, aes(x = long, y = lat, group = group), colour = "grey", fill = NA) + geom_point(data=catches_ecoregion, aes(longitude,latitude))
 
@@ -568,7 +568,7 @@ write.csv(CE_PSBB_catches_ecoregion_reasigned, "2024_CE_PSBB_catches_ecoregion_r
 #####################################################################################################################
 
 # Set the WD
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
+setwd("~/.../1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
 
 ##################################################
 ### Others (GN, LI, Oth)
@@ -590,7 +590,7 @@ datos_OT[is.na(datos_OT)] <- 0
 ##################################################
 # Read shapefile
 ##################################################
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
+setwd("~/.../4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
 
 ecoregions<-readOGR("Final_area_for_calculations.shp", layer="Final_area_for_calculations") # Don't worry about the warnings()
 class(ecoregions) # See how it is a "SpatialPolygonsDataFrame"
@@ -602,7 +602,7 @@ class(world)
 ##################################################
 #Transform fishing ground code into latitude and longitude
 ##################################################
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
+setwd("~/.../1. Catch and Effort/1. Good Data/1. Data_and_files_2024")
 # Split grid column into: size, quadrant, latitude and longitude
 # In hemisphere: 1=N and 2=S
 datos <- datos_OT %>% separate(col = Grid, sep = c(1, 2, 4), 
@@ -743,7 +743,7 @@ head(catches_ecoregion)
 summary(catches_ecoregion)
 
 # Read and plot ecoregion poligons
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
+setwd("~/.../4. GIS/1. Layers/IOTC_fisheries_reassignation_layers")
 ecoregions_shp="Final_area_for_calculations.shp"
 ecoregion<-readOGR(dsn = ecoregions_shp, stringsAsFactors = F) # Don't worry about the warnings()
 
