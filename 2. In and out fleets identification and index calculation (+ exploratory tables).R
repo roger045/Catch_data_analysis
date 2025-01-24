@@ -3,7 +3,7 @@
 ###### and how many catches are made inside/outside our model area        ######
 ###### Species included in the dataset: ALB, YFT, BET, SKJ, SWO           ######
 ###### Author: Roger Amate (AZTI)                                         ######
-###### year: 2023                                                         ######
+###### Year: 2023                                                         ######
 ################################################################################
 
 #install.packages('tidyr')
