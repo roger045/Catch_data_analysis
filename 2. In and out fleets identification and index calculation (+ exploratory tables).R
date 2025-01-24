@@ -20,7 +20,7 @@ library(readr)
 library(hrbrthemes)
 
 # Set the working directory where the dataset is saved
-setwd("~/...")
+setwd("~/.../4. Rised catch data/2022_Data/csv")
 
                   ################ IN & OUT FLEETS IDENTIFICATION #################
 
