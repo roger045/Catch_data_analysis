@@ -1,7 +1,7 @@
 ################################################################################
-###### Script to calculate which fleets are fishing inside the model area ###### 
-###### and how many catches of the are made inside/outside our model area ######
-###### Tropical tunas: ALB, YFT, BET, SKJ, SWO                            ######
+###### Script to calculate the real total catch of the five species       ###### 
+###### of the Rised Catch data inside the by fleet and school type        ######
+###### Species: ALB, YFT, BET, SKJ, SWO                                   ######
 ###### Author: Roger Amate (AZTI)                                         ######
 ###### year: 2023                                                         ######
 ################################################################################
@@ -13,28 +13,27 @@
 #install.packages('readxl')
 #install.packages('hrbrthemes')
 
-library(tidyr)
-library(dplyr)
-library(ggplot2)
-library(readr)
-library(hrbrthemes)
+library("tidyr")
+library("dplyr")
+library("ggplot2")
+library("readr")
+library("hrbrthemes")
 
 # Set the working directory
 setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch data/2022_Data/csv")
 
-
 #--------------------------------Data preparation------------------------------#
 
-# read the data
+# Read the data
 catch <- read.csv('Rised_catch_5sp_catches_ecoregion_with_model_reasinged.csv', sep=',')
 catch[1] <- NULL
 head(catch)
 str(catch)
 
-# check for NA values
+# Check for NA values
 any(is.na(catch)) # With this line we check if there are empty values (NA) in the database
 
-catch$Fleet <- trimws(catch$Fleet) # Dealte the white spaces that some fleets have at the end of their acronym.
+catch$Fleet <- trimws(catch$Fleet) # Delete the white spaces that some fleets have at the end of their acronym.
 
 # Add a column classifying groups depending if the species is Tropical, temperate or subtropical billfishes
 # Create an empty column named: SPECIES_GROUP
@@ -54,7 +53,6 @@ catch$SPECIES_GROUP <- ifelse(catch$Species=='YFT', 'Tropical tunas', catch$SPEC
 
 # Swordfish = Subtropical Billfishes
 catch$SPECIES_GROUP <- ifelse(catch$Species=='SWO', 'Subtropical billfishes', catch$SPECIES_GROUP)
-
 
 catch_21y <- catch%>%subset(Year >= '2000') # Subset the data for the years that we want
 
@@ -122,9 +120,10 @@ catch2$EwE_fleet <- ifelse((catch2$Fleet=='EUFRA' | catch2$Fleet=='EUITA' | catc
 # We correct PS for the Seychellean PS fleet
 catch2$EwE_fleet <- ifelse(catch2$Fleet=='SYC' & catch2$Gear_code=='PS', 'SYC_PS', catch2$EwE_fleet)
 
-# We correct for the FS and LS
 
-##### Convert all the school_type= UNCL to FS
+###### We correct for the FS and LS ######
+
+# Convert all the school_type= UNCL to FS
 catch2$SchoolType <- ifelse(catch2$Gear_code=='PS' & catch2$SchoolType=='UNCL', 'FS', catch2$SchoolType)
 
 catch2$EwE_fleet <- ifelse(catch2$Gear_code=='PS', paste(catch2$EwE_fleet, catch2$SchoolType, sep=''), catch2$EwE_fleet)
