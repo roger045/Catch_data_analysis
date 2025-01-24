@@ -1,10 +1,10 @@
 ################################################################################
 ###### Script to read the outputs of the different stock assessments      ######
 ###### (SS3 model) and calculate from the outputs, how many juevniles     ######
-######  and adults each fleet is fishing                                  ######
-###### Species: BET, YFT and SKJ                                          ######
+###### and adults each fleet is fishing in tons                           ######
+###### Species: BET, YFT, SKJ                                             ######
 ###### Author: Roger Amate (AZTI)                                         ######
-###### year: 2023                                                         ######
+###### Year: 2023                                                         ######
 ################################################################################
 #install.packages("zoo")
 #install.packages("r4ss") # 
@@ -84,7 +84,7 @@ SS_plots(SA_SKJ)   # This function automatically makes almost all figures of the
 
 #######################################################    BIGEYE   ####################################################
 # Set the working directory where we have saved the BET_catch_at_age.csv
-setwd("...")
+setwd("C:/.../1. Datasets with data on the model area as a unit (correct)/BET")
 ########################### Data preparation ######
 # read the data
 catage <- read.csv('BET_catch_at_age.csv', sep=',')
@@ -169,7 +169,7 @@ for (i in 1:41) {
 }
 
 # Save the dataset as .csv
-write.csv(catage2, 'BET_catches_in_tonnes_x_gear_and_age.csv')
+write.csv(catage2, 'BET_catches_in_tons_x_gear_and_age.csv')
 ################################
 
 ################################   BAITBOAT  ######
@@ -422,7 +422,7 @@ ggplot(catage6, aes(fill=Stanza, y=Catch, x=Year)) +
 
 #######################################################    YELLOWFIN   ##################################################
 # Set the working directory where we have saved the YFT_catch_at_age.csv
-setwd("C:/Use/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/7. Stock_assessment/1. Datasets with data on the model area as a unit (correct)/YFT")
+setwd("C:/.../1. Datasets with data on the model area as a unit (correct)/YFT")
 
 ################## Data preparation 
 # read the data
@@ -515,7 +515,7 @@ for (i in 1:29) {
 }
 
 # Save the dataset as .csv
-write.csv(catage2, 'YFT_catches_in_tonnes_x_gear_and_age.csv')
+write.csv(catage2, 'YFT_catches_in_tons_x_gear_and_age.csv')
 ################################
 
 ################################   GILLNET  #####
@@ -801,7 +801,7 @@ ggplot(catage6, aes(fill=Stanza, y=Catch, x=Year)) +
 
 #######################################################    SKIPJACK   ##################################################
 # Set the working directory where we have saved the SKJ_catch_at_age.csv
-setwd("...")
+setwd("C:/.../1. Datasets with data on the model area as a unit (correct)/SKJ")
 
 ################## Data preparation 
 # read the data
@@ -879,7 +879,7 @@ for (i in 1:9) {
 }
 
 # Save the dataset as .csv
-write.csv(catage2, 'SKJ_catches_in_tonnes_x_gear_and_age.csv')
+write.csv(catage2, 'SKJ_catches_in_tons_x_gear_and_age.csv')
 ################################
 
 ################################   LONGLINE  #####
@@ -1123,5 +1123,8 @@ ggplot(catage6, aes(fill=Stanza, y=Catch, x=Yr)) +
   ggtitle('Longline fleets juvenile and adult SKJ catch proportion in the Indian Ocean [1950-2022]')+ #Change the gear name in the title
   scale_y_continuous(labels = scales::label_number(scale = 1)) # Converts scientific notation to numerical
 
-###################################################################################################################################
+########## NOTE: To calculate and apply the proportion of juveniles and adults to each year and each model fleet
+########## the calculation is made in a separate Excel file. (Reference: README)
 
+###################################################################################################################################
+###################################################################################################################################
