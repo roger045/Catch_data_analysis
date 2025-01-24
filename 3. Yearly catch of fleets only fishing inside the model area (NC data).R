@@ -21,7 +21,7 @@ library(readr)
 library(hrbrthemes)
 
 # Set the working directory
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/8. Nominal_catch")
+setwd("~/.../2. Workind data/8. Nominal_catch")
 
 
 #--------------------------------Data preparation------------------------------#
@@ -91,7 +91,7 @@ catch5 <- catch4 %>% aggregate(CATCH ~ YEAR + SPECIES_CODE + Fleet, sum)
 Years <- unique(catch5$YEAR)
 
 # Change the directory where we want the files of catches by fllet and year to be saved
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/10. Catch_calculation_data/1. Catches_of_NC_fleets_by_year")
+setwd("~/.../10. Catch_calculation_data/1. Catches_of_NC_fleets_by_year")
 
 # Iterate over each year and save one .csv file per year
 for (yr in Years) {
