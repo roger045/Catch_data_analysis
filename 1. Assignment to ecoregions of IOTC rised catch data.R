@@ -33,7 +33,7 @@ rm(list=ls())
 
 #This opens the 5 species datsheets and merge them into one big dataset called "datos"
 # Set the working dierectory where the data of the rised catch of the 5 species separated is stored. The data must be in .csv format
-setwd("...")
+setwd("C:/.../2. Workind data/6.Ecor_fleet_reassing")
 
 alb<-read.csv(file="ALB.csv",header=TRUE, sep=";")
 bet<-read.csv(file="BET.csv",header=TRUE, sep=";") 
@@ -50,7 +50,7 @@ write.csv(datos, file="5sp.csv", row.names = FALSE)
 ##################################################
 
 # Set the working dierectory where the data of the rised catch is stored. The data must be in .csv format
-setwd("...")
+setwd("C:/.../2. Workind data/6.Ecor_fleet_reassing")
 
 # Read the dataset
 datos<-read.csv("5sp.csv", sep=",")
@@ -62,7 +62,7 @@ class(datos)# see how it is a data.frame
 
 # Read shapefile
 # Set the working dierectory where the shapefile of the ecoregions is stored. It must be in .shp format.
-setwd("...")
+setwd("C:/.../1. Layers/IOTC_fisheries_reassignation_layers")
 
 ecoregions<-readOGR("Final_area_for_calculations.shp", layer="Final_area_for_calculations")
 class(ecoregions) # see how it is a "SpatialPolygonsDataFrame"
