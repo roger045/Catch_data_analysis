@@ -113,7 +113,7 @@ catch7 <- catch6 %>% pivot_wider(names_from = Year, values_from = MT)
 catch7  <- replace(catch7 , is.na(catch7), 0)
 
 # Change the working directory to the desired folder where to save the data
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch data/2022_Data/csv")
+setwd("~/.../4. Rised catch data/2022_Data/csv")
 
 # Save the dataframe as a .csv
 write.csv(catch7, 'FS-LS_fleets_catch_separation_in_and_out_MA.csv')
