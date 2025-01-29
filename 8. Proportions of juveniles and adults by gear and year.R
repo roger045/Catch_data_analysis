@@ -19,9 +19,9 @@ library(hrbrthemes)
 library(scales)
 
 ### Paste the directory where the outputs of each species are stored
-dir.BET=".../8. Lectura de fichers/latest_SA_files/BET/io_h80_Gbase_MHamel17_sD/"         # It's a example
-dir.YFT=".../8. Lectura de fichers/latest_SA_files/YFT/io_h80_q1_Gbase_Mbase_tlambda01/"  # It's a example
-dir.SKJ=".../8. Lectura de fichers/latest_SA_files/SKJ/io_h80_Ua_q0_L70/"                 # It's a example
+dir.BET=".../8. Lectura de fichers/latest_SA_files/BET/io_h80_Gbase_MHamel17_sD/"         # It's an example
+dir.YFT=".../8. Lectura de fichers/latest_SA_files/YFT/io_h80_q1_Gbase_Mbase_tlambda01/"  # It's an example
+dir.SKJ=".../8. Lectura de fichers/latest_SA_files/SKJ/io_h80_Ua_q0_L70/"                 # It's an example
 
 #######################################################    BIGEYE   ####################################################
 SA_BET=SS_output(dir.BET, covar=FALSE)  # This reads the outputs of the assessment from "Report.soo".
