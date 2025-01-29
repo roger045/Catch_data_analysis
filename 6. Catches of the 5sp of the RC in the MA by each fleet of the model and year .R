@@ -20,7 +20,7 @@ library("readr")
 library("hrbrthemes")
 
 # Set the working directory
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch data/2022_Data/csv")
+setwd("~/.../4. Rised catch data/2022_Data/csv")
 
 #--------------------------------Data preparation------------------------------#
 
@@ -145,7 +145,7 @@ SWO_catch <- subset(Catch3MA, Species=='SWO')
 YFT_catch <- subset(Catch3MA, Species=='YFT')
 
 # Change saving directory
-setwd("~/OneDrive - AZTI/1. Tesis/5. Data/1. IOTC/2. Workind data/4. Rised catch data/2022_Data/csv")
+setwd("~/.../4. Rised catch data/2022_Data/csv")
 
 # Change the df configuration so now the years are in columns 
 
