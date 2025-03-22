@@ -128,6 +128,11 @@ catch2$SchoolType <- ifelse(catch2$Gear_code=='PS' & catch2$SchoolType=='UNCL', 
 
 catch2$EwE_fleet <- ifelse(catch2$Gear_code=='PS', paste(catch2$EwE_fleet, catch2$SchoolType, sep=''), catch2$EwE_fleet)
 
+# Convert the Indonesian PS catches from FS to LS as suggested by Bram
+catch2$SchoolType <- ifelse(catch2$Gear_code=='PS' & catch2$Fleet=='IDN', 'LS', catch2$SchoolType)
+
+catch2$EwE_fleet <- ifelse(catch2$Gear_code=='PS'& catch2$Fleet=='IDN', 'NonEU_PSLS', catch2$EwE_fleet)
+
 # We select only the columns that interest us
 catch2[,c(3,4,5,8)] <- NULL
 
